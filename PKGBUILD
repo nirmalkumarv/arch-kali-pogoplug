@@ -806,7 +806,7 @@ update-locale LANG="en_US.UTF-8" LANGUAGE="en_US" LC_ALL="en_US.UTF-8"
 #dpkg-reconfigure locales
 dpkg-reconfigure -f noninteractive tzdata
 
-apt-get --yes --force-yes install wget build-essential libncurses-dev devscripts fakeroot kernel-package
+apt-get --yes --force-yes install wget build-essential libncurses-dev devscripts fakeroot kernel-package bc
 
 rm -f /second-stage
 EOF
@@ -1108,7 +1108,7 @@ export PATH=/bin:/sbin:/usr/bin:/usr/sbin:$PATH
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get update
-#apt-get --yes --force-yes install wget build-essential libncurses-dev devscripts fakeroot kernel-package
+#apt-get --yes --force-yes install wget build-essential libncurses-dev devscripts fakeroot kernel-package bc
 
 MACHINECORES=$(grep -c processor /proc/cpuinfo)
 if [ "$MACHINECORES" = "" ]; then
@@ -1575,7 +1575,7 @@ export PATH=/bin:/sbin:/usr/bin:/usr/sbin:$PATH
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get update
-apt-get --yes --force-yes install wget build-essential libncurses-dev devscripts fakeroot kernel-package
+apt-get --yes --force-yes install wget build-essential libncurses-dev devscripts fakeroot kernel-package bc
 
 MACHINECORES=$(grep -c processor /proc/cpuinfo)
 if [ "$MACHINECORES" = "" ]; then
