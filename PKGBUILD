@@ -663,25 +663,9 @@ EOF
         sudo rm -f "${DN_ROOTFS_DEBIAN}/debconf.set"
 
         sudo umount "${DN_ROOTFS_DEBIAN}/proc/sys/fs/binfmt_misc"
-        #if [ ! "$?" = "0" ]; then
-            #echo "Error in unmount proc/sys/fs/binfmt_misc"
-            #exit 1
-        #fi
         sudo umount "${DN_ROOTFS_DEBIAN}/dev/pts"
-        if [ ! "$?" = "0" ]; then
-            echo "Error in unmount dev/pts"
-            exit 1
-        fi
         sudo umount "${DN_ROOTFS_DEBIAN}/dev/"
-        if [ ! "$?" = "0" ]; then
-            echo "Error in unmount dev"
-            exit 1
-        fi
         sudo umount "${DN_ROOTFS_DEBIAN}/proc"
-        if [ ! "$?" = "0" ]; then
-            echo "Error in unmount proc"
-            exit 1
-        fi
         sudo umount "${DN_ROOTFS_DEBIAN}/sys/"
 
         #sudo chown -R root:root "${DN_ROOTFS_DEBIAN}"
@@ -988,9 +972,10 @@ EOF
 }
 
 build_linuxkernel_install_rootfs_4device_pogoplug() {
-    echo ""
-    #cp "${srcdir}/${DNSRC_UBOOT}/"
-    sudo cp "${srcdir}/${MNTPOINT_BOOT_FIRMWARE}/zImage" "${srcdir}/${MNTPOINT_BOOT_FIRMWARE}/zImage-${_PKGVER_LINUX}-kirkwood-yhfu-3"
+    sudo cp "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage" "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage-${_PKGVER_LINUX}-kirkwood-yhfu-3"
+    if [ ! "$?" = "0" ]; then
+        echo "[DBG] Error in copy zImage"
+    fi
 }
 
 build_linuxkernel_install_rootfs_4device() {
@@ -1590,11 +1575,14 @@ cd /home/source/
 make -j $MACHINECORES sheevaplug_config
 make -j $MACHINECORES
 
-cp "u-boot.bin" "${MNTPOINT_BOOT_FIRMWARE}/u-boot.bin"
+cp "u-boot.bin" "/home/target/${MNTPOINT_BOOT_FIRMWARE}/u-boot.bin"
 
 EOF
     compile_in_rootfs_bychroot "U-BOOT" "${PREFIX_TMP}-compileuboot" "${srcdir}/${DNSRC_UBOOT}" "${DN_ROOTFS_KERNEL}" "${srcdir}/rootfs-compilekernel-${MACHINEARCH}-${pkgname}"
-    sudo cp "${srcdir}/${MNTPOINT_BOOT_FIRMWARE}/u-boot.bin" "${srcdir}/${MNTPOINT_BOOT_FIRMWARE}/uboot.2014.07-yhfu-1.pogo_v4.mtd0.kwb"
+    sudo cp "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/u-boot.bin" "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/uboot.2014.07-yhfu-1.pogo_v4.mtd0.kwb"
+    if [ ! "$?" = "0" ]; then
+        echo "[DBG] Error in copy u-boot.bin"
+    fi
 }
 
 build_uboot_install_rootfs_4device () {
