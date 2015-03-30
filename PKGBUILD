@@ -1544,7 +1544,7 @@ build_uboot_install_rootfs_4device_hardkernel () {
     fi
 
     echo "[DBG] PATH=${PATH}"
-    make -j $MACHINECORES sheevaplug_config
+    make -j $MACHINECORES odroidc_config
     make -j $MACHINECORES
 
     sudo cp "${srcdir}/boot.ini.template"   "${DN_BOOT_4KERNEL}/boot.ini"
@@ -1587,7 +1587,7 @@ export CONCURRENCY_LEVEL=${MACHINECORES}
 cd /home/source/
 #make clean
 
-make -j $MACHINECORES odroidc_config
+make -j $MACHINECORES sheevaplug_config
 make -j $MACHINECORES
 
 cp "u-boot.bin" "${MNTPOINT_BOOT_FIRMWARE}/u-boot.bin"
