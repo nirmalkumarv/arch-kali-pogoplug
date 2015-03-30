@@ -819,6 +819,7 @@ EOF
         fi
         sudo chroot "${PARAM_DN_DEBIAN}" /second-stage
         if [ "$?" = "0" ]; then
+            sudo rm -f "${PARAM_DN_DEBIAN}/second-stage"
             touch "${PREFIX_TMP}-FLG_KALI_ROOTFS_4COMPILE"
         else
             echo "Error in second-stage"
@@ -1146,7 +1147,6 @@ make -j $MACHINECORES
 make -j $MACHINECORES modules
 make -j $MACHINECORES modules_install INSTALL_MOD_PATH="/home/target/"
 
-rm -f /third-stage
 EOF
     compile_in_rootfs_bychroot "KERNEL" "${PREFIX_TMP}-ths" "${srcdir}/${DNSRC_LINUX}" "${DN_ROOTFS_KERNEL}" "${srcdir}/rootfs-compilekernel-${MACHINEARCH}-${pkgname}"
 
@@ -1592,7 +1592,6 @@ make -j $MACHINECORES
 
 cp "u-boot.bin" "${MNTPOINT_BOOT_FIRMWARE}/u-boot.bin"
 
-rm -f /third-stage
 EOF
     compile_in_rootfs_bychroot "U-BOOT" "${PREFIX_TMP}-compileuboot" "${srcdir}/${DNSRC_UBOOT}" "${DN_ROOTFS_KERNEL}" "${srcdir}/rootfs-compilekernel-${MACHINEARCH}-${pkgname}"
     sudo cp "${srcdir}/${MNTPOINT_BOOT_FIRMWARE}/u-boot.bin" "${srcdir}/${MNTPOINT_BOOT_FIRMWARE}/uboot.2014.07-yhfu-1.pogo_v4.mtd0.kwb"
