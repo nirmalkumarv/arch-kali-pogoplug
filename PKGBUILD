@@ -510,17 +510,25 @@ EOF
         #sudo mkdir -p "${DN_ROOTFS_DEBIAN}/dev/"
         #sudo mkdir -p "${DN_ROOTFS_DEBIAN}/dev/pts"
         sudo mount -o bind /sys/ "${DN_ROOTFS_DEBIAN}/sys/"
+        mount | grep "${PARAM_DN_DEBIAN}/sys"
+        if [ ! "$?" = "0" ]; then
+            echo "Error in mount proc"
+            exit 1
+        fi
         sudo mount -t proc proc "${DN_ROOTFS_DEBIAN}/proc"
+        mount | grep "${PARAM_DN_DEBIAN}/proc"
         if [ ! "$?" = "0" ]; then
             echo "Error in mount proc"
             exit 1
         fi
         sudo mount -o bind /dev/ "${DN_ROOTFS_DEBIAN}/dev/"
+        mount | grep "${PARAM_DN_DEBIAN}/dev"
         if [ ! "$?" = "0" ]; then
             echo "Error in mount dev"
             exit 1
         fi
         sudo mount -o bind /dev/pts "${DN_ROOTFS_DEBIAN}/dev/pts"
+        mount | grep "${PARAM_DN_DEBIAN}/dev/pts"
         if [ ! "$?" = "0" ]; then
             echo "Error in mount dev/pts"
             exit 1
@@ -839,20 +847,28 @@ EOF
         #sudo mkdir -p "${PARAM_DN_DEBIAN}/dev/pts"
         echo "[DBG] mount /sys -> ${PARAM_DN_DEBIAN}/sys"
         sudo mount -o bind /sys/ "${PARAM_DN_DEBIAN}/sys/"
+        mount | grep "${PARAM_DN_DEBIAN}/sys"
+        if [ ! "$?" = "0" ]; then
+            echo "Error in mount sys"
+            exit 1
+        fi
         echo "[DBG] mount /proc"
         sudo mount -t proc proc "${PARAM_DN_DEBIAN}/proc"
+        mount | grep "${PARAM_DN_DEBIAN}/proc"
         if [ ! "$?" = "0" ]; then
             echo "Error in mount proc"
             exit 1
         fi
         echo "[DBG] mount /dev -> ${PARAM_DN_DEBIAN}/dev"
         sudo mount -o bind /dev/ "${PARAM_DN_DEBIAN}/dev/"
+        mount | grep "${PARAM_DN_DEBIAN}/dev"
         if [ ! "$?" = "0" ]; then
             echo "Error in mount dev"
             exit 1
         fi
         echo "[DBG] mount /dev/pts -> ${PARAM_DN_DEBIAN}/dev/pts"
         sudo mount -o bind /dev/pts "${PARAM_DN_DEBIAN}/dev/pts"
+        mount | grep "${PARAM_DN_DEBIAN}/dev/pts"
         if [ ! "$?" = "0" ]; then
             echo "Error in mount dev/pts"
             exit 1
@@ -913,25 +929,9 @@ EOF
         sudo rm -f "${PARAM_DN_DEBIAN}/debconf.set"
 
         sudo umount "${PARAM_DN_DEBIAN}/proc/sys/fs/binfmt_misc"
-        #if [ ! "$?" = "0" ]; then
-            #echo "Error in unmount proc/sys/fs/binfmt_misc"
-            #exit 1
-        #fi
         sudo umount "${PARAM_DN_DEBIAN}/dev/pts"
-        if [ ! "$?" = "0" ]; then
-            echo "Error in unmount dev/pts"
-            exit 1
-        fi
         sudo umount "${PARAM_DN_DEBIAN}/dev/"
-        if [ ! "$?" = "0" ]; then
-            echo "Error in unmount dev"
-            exit 1
-        fi
         sudo umount "${PARAM_DN_DEBIAN}/proc"
-        if [ ! "$?" = "0" ]; then
-            echo "Error in unmount proc"
-            exit 1
-        fi
         sudo umount "${PARAM_DN_DEBIAN}/sys/"
 
         #sudo chown -R root:root "${PARAM_DN_DEBIAN}"
