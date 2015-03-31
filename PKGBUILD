@@ -50,12 +50,12 @@ MAKE_CONFIG=kirkwood_defconfig
 # script will throw an error, but will still continue on, and create an unusable
 # image, keep that in mind.
 PACKAGES_ARM="abootimg cgpt fake-hwclock ntpdate vboot-utils vboot-kernel-utils uboot-mkimage"
-PACKAGES_BASE="kali-menu kali-defaults initramfs-tools sudo parted e2fsprogs usbutils nfs-common lsb-release ntfs-3g usbmount hdparm tmux"
-PACKAGES_DESKTOP="xfce4 network-manager network-manager-gnome xserver-xorg-video-fbdev"
+PACKAGES_BASE="kali-menu kali-defaults initramfs-tools sudo parted e2fsprogs usbutils nfs-common lsb-release ntfs-3g usbmount hdparm tmux wpasupplicant"
 PACKAGES_TOOLS="passing-the-hash winexe aircrack-ng hydra john sqlmap wireshark libnfc-bin mfoc nmap ethtool"
 PACKAGES_SERVICES="openssh-server apache2"
-PACKAGES_EXTRAS="iceweasel wpasupplicant"
-#PACKAGES_ADDON="fruitywifi xfce4-goodies kali-linux-full"
+PACKAGES_DESKTOP="xfce4 network-manager network-manager-gnome xserver-xorg-video-fbdev"
+PACKAGES_EXTRAS="iceweasel"
+PACKAGES_ADDON="fruitywifi xfce4-goodies kali-linux-full"
 export PACKAGES="${PACKAGES_ARM} ${PACKAGES_BASE} ${PACKAGES_DESKTOP} ${PACKAGES_TOOLS} ${PACKAGES_SERVICES} ${PACKAGES_EXTRAS} ${PACKAGES_ADDON}"
 
 # the image container size
@@ -774,6 +774,7 @@ compile_in_rootfs_bychroot() {
         #sudo mkdir -p "${PARAM_DN_DEBIAN}/dev/"
         #sudo mkdir -p "${PARAM_DN_DEBIAN}/dev/pts"
         echo "[DBG] mount /sys -> ${PARAM_DN_DEBIAN}/sys"
+        mkdir -p "${PARAM_DN_DEBIAN}/sys/"
         sudo mount -o bind /sys/ "${PARAM_DN_DEBIAN}/sys/"
         mount | grep "${PARAM_DN_DEBIAN}/sys"
         if [ ! "$?" = "0" ]; then
@@ -781,6 +782,7 @@ compile_in_rootfs_bychroot() {
             exit 1
         fi
         echo "[DBG] mount /proc"
+        mkdir -p "${PARAM_DN_DEBIAN}/proc/"
         sudo mount -t proc proc "${PARAM_DN_DEBIAN}/proc"
         mount | grep "${PARAM_DN_DEBIAN}/proc"
         if [ ! "$?" = "0" ]; then
@@ -788,6 +790,7 @@ compile_in_rootfs_bychroot() {
             exit 1
         fi
         echo "[DBG] mount /dev -> ${PARAM_DN_DEBIAN}/dev"
+        mkdir -p "${PARAM_DN_DEBIAN}/dev/"
         sudo mount -o bind /dev/ "${PARAM_DN_DEBIAN}/dev/"
         mount | grep "${PARAM_DN_DEBIAN}/dev"
         if [ ! "$?" = "0" ]; then
@@ -802,7 +805,6 @@ compile_in_rootfs_bychroot() {
             exit 1
         fi
     fi
-
 
     echo "[DBG] create rootfs for compile source"
     if [ -f "${PREFIX_TMP}-FLG_KALI_ROOTFS_4COMPILE" ]; then
@@ -1120,7 +1122,11 @@ cd /home/source/
 
 # make debian package
 #make clean
+
+aptitude safe-upgrade
 mkdir -p /etc/kernel/postinst.d/
+mkdir -p /etc/kernel/postrm.d/
+mkdir -p /etc/kernel/preinst.d/
 echo "fakeroot make-kpkg --arch arm ${MY_CROSSCOMP_ARG} --initrd ${MY_VEREXT_ARG} kernel_image kernel_headers"
 fakeroot make-kpkg --arch arm ${MY_CROSSCOMP_ARG} --initrd ${MY_VEREXT_ARG} kernel_image kernel_headers
 
