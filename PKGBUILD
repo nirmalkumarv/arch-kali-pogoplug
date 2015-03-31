@@ -768,6 +768,42 @@ compile_in_rootfs_bychroot() {
         sudo cp `which qemu-arm-static` "${PARAM_DN_DEBIAN}/usr/bin/"
     fi
 
+    if [[ ! -f "${PREFIX_TMP}-FLG_KALI_ROOTFS_4COMPILE" || ! -f "${PREFIX_TMP}-FLG_KALI_COMPILE_${PARAM_TAGNAME}_CHROOT" ]]; then
+        #sudo mkdir -p "${PARAM_DN_DEBIAN}/sys"
+        #sudo mkdir -p "${PARAM_DN_DEBIAN}/proc"
+        #sudo mkdir -p "${PARAM_DN_DEBIAN}/dev/"
+        #sudo mkdir -p "${PARAM_DN_DEBIAN}/dev/pts"
+        echo "[DBG] mount /sys -> ${PARAM_DN_DEBIAN}/sys"
+        sudo mount -o bind /sys/ "${PARAM_DN_DEBIAN}/sys/"
+        mount | grep "${PARAM_DN_DEBIAN}/sys"
+        if [ ! "$?" = "0" ]; then
+            echo "Error in mount sys"
+            exit 1
+        fi
+        echo "[DBG] mount /proc"
+        sudo mount -t proc proc "${PARAM_DN_DEBIAN}/proc"
+        mount | grep "${PARAM_DN_DEBIAN}/proc"
+        if [ ! "$?" = "0" ]; then
+            echo "Error in mount proc"
+            exit 1
+        fi
+        echo "[DBG] mount /dev -> ${PARAM_DN_DEBIAN}/dev"
+        sudo mount -o bind /dev/ "${PARAM_DN_DEBIAN}/dev/"
+        mount | grep "${PARAM_DN_DEBIAN}/dev"
+        if [ ! "$?" = "0" ]; then
+            echo "Error in mount dev"
+            exit 1
+        fi
+        echo "[DBG] mount /dev/pts -> ${PARAM_DN_DEBIAN}/dev/pts"
+        sudo mount -o bind /dev/pts "${PARAM_DN_DEBIAN}/dev/pts"
+        mount | grep "${PARAM_DN_DEBIAN}/dev/pts"
+        if [ ! "$?" = "0" ]; then
+            echo "Error in mount dev/pts"
+            exit 1
+        fi
+    fi
+
+
     echo "[DBG] create rootfs for compile source"
     if [ -f "${PREFIX_TMP}-FLG_KALI_ROOTFS_4COMPILE" ]; then
         echo "[DBG] SKIP create rootfs for compile source"
@@ -775,7 +811,6 @@ compile_in_rootfs_bychroot() {
     else
         # create the rootfs - not much to modify here, except maybe the hostname.
         echo "[DBG] debootstrap --variant=minbase --no-check-gpg --include=wget,apt-utils,sudo --arch ${MACHINEARCH} kali '${PARAM_DN_DEBIAN}'  http://${INSTALL_MIRROR}/kali"
-        #sudo debootstrap --foreign --no-check-gpg --include=ca-certificates,ssh,vim,locales,ntpdate,initramfs-tools --arch ${MACHINEARCH} kali "${DN_ROOTFS_DEBIAN}" "http://${INSTALL_MIRROR}/kali"
         #sudo debootstrap --variant=minbase --no-check-gpg --include=wget,apt-utils,sudo --arch=${MACHINEARCH} jessie "${PARAM_DN_DEBIAN}"
         sudo debootstrap --variant=minbase --no-check-gpg --include=wget,apt-utils,sudo --arch ${MACHINEARCH} kali "${PARAM_DN_DEBIAN}" "http://${INSTALL_MIRROR}/kali"
         if [ ! "$?" = "0" ]; then
@@ -817,7 +852,6 @@ EOF
             echo "Error in second-stage"
             exit 1
         fi
-
     fi
 
     echo "[DBG] compile ${PARAM_TAGNAME} by chroot"
@@ -825,38 +859,6 @@ EOF
         echo "[DBG] SKIP compile ${PARAM_TAGNAME} by chroot"
 
     else
-        #sudo mkdir -p "${PARAM_DN_DEBIAN}/sys"
-        #sudo mkdir -p "${PARAM_DN_DEBIAN}/proc"
-        #sudo mkdir -p "${PARAM_DN_DEBIAN}/dev/"
-        #sudo mkdir -p "${PARAM_DN_DEBIAN}/dev/pts"
-        echo "[DBG] mount /sys -> ${PARAM_DN_DEBIAN}/sys"
-        sudo mount -o bind /sys/ "${PARAM_DN_DEBIAN}/sys/"
-        mount | grep "${PARAM_DN_DEBIAN}/sys"
-        if [ ! "$?" = "0" ]; then
-            echo "Error in mount sys"
-            exit 1
-        fi
-        echo "[DBG] mount /proc"
-        sudo mount -t proc proc "${PARAM_DN_DEBIAN}/proc"
-        mount | grep "${PARAM_DN_DEBIAN}/proc"
-        if [ ! "$?" = "0" ]; then
-            echo "Error in mount proc"
-            exit 1
-        fi
-        echo "[DBG] mount /dev -> ${PARAM_DN_DEBIAN}/dev"
-        sudo mount -o bind /dev/ "${PARAM_DN_DEBIAN}/dev/"
-        mount | grep "${PARAM_DN_DEBIAN}/dev"
-        if [ ! "$?" = "0" ]; then
-            echo "Error in mount dev"
-            exit 1
-        fi
-        echo "[DBG] mount /dev/pts -> ${PARAM_DN_DEBIAN}/dev/pts"
-        sudo mount -o bind /dev/pts "${PARAM_DN_DEBIAN}/dev/pts"
-        mount | grep "${PARAM_DN_DEBIAN}/dev/pts"
-        if [ ! "$?" = "0" ]; then
-            echo "Error in mount dev/pts"
-            exit 1
-        fi
 
         if [ ! -f "${PARAM_FN_EXEC}" ]; then
             echo "[DBG] not set exec file!!"
@@ -868,18 +870,25 @@ EOF
             echo "Error in move script third-stage"
             exit 1
         fi
-
         sudo chroot "${PARAM_DN_DEBIAN}" /third-stage
         if [ ! "$?" = "0" ]; then
             echo "Error in third-stage"
             exit 1
         fi
 
-        # unmount the cache folder befor clean up, we may reuse the cache for other builds.
-        aptcache_backup2srcdst "../archives-real/" "${PARAM_DN_DEBIAN}/var/cache/apt/archives"
-        sudo umount "${PARAM_DN_DEBIAN}/var/cache/apt/archives-real"
-        sudo rmdir "${PARAM_DN_DEBIAN}/var/cache/apt/archives-real"
-        find "${PARAM_DN_DEBIAN}/var/cache/apt/archives/" | while read i ; do sudo rm -rf $i; done
+        sudo rm -f "${PARAM_DN_DEBIAN}/debconf.set"
+
+        #sudo chown -R root:root "${PARAM_DN_DEBIAN}"
+        touch "${PREFIX_TMP}-FLG_KALI_COMPILE_${PARAM_TAGNAME}_CHROOT"
+    fi
+
+    # unmount the cache folder befor clean up, we may reuse the cache for other builds.
+    aptcache_backup2srcdst "../archives-real/" "${PARAM_DN_DEBIAN}/var/cache/apt/archives"
+    sudo umount "${PARAM_DN_DEBIAN}/var/cache/apt/archives-real"
+    sudo rmdir "${PARAM_DN_DEBIAN}/var/cache/apt/archives-real"
+    find "${PARAM_DN_DEBIAN}/var/cache/apt/archives/" | while read i ; do sudo rm -rf $i; done
+
+    if [[ ! -f "${PREFIX_TMP}-FLG_KALI_ROOTFS_4COMPILE" || ! -f "${PREFIX_TMP}-FLG_KALI_COMPILE_${PARAM_TAGNAME}_CHROOT" ]]; then
 
         cat << EOF > "${PREFIX_TMP}-cln"
 #!/bin/bash
@@ -903,30 +912,20 @@ EOF
             echo "Error in move script cleanup"
             exit 1
         fi
-
         sudo chroot "${PARAM_DN_DEBIAN}" /cleanup
         if [ ! "$?" = "0" ]; then
             echo "Error in chroot cleanup"
             exit 1
         fi
-        sudo rm -f "${PARAM_DN_DEBIAN}/usr/bin/qemu*"
-        sudo rm -f "${PARAM_DN_DEBIAN}/debconf.set"
-
-        sudo umount "${PARAM_DN_DEBIAN}/proc/sys/fs/binfmt_misc"
-        sudo umount "${PARAM_DN_DEBIAN}/dev/pts"
-        sudo umount "${PARAM_DN_DEBIAN}/dev/"
-        sudo umount "${PARAM_DN_DEBIAN}/proc"
-        sudo umount "${PARAM_DN_DEBIAN}/sys/"
-
-        #sudo chown -R root:root "${PARAM_DN_DEBIAN}"
-        touch "${PREFIX_TMP}-FLG_KALI_COMPILE_${PARAM_TAGNAME}_CHROOT"
     fi
 
     # make sure it umounted
-    aptcache_backup2srcdst "../archives-real/" "${PARAM_DN_DEBIAN}/var/cache/apt/archives"
-    sudo umount "${PARAM_DN_DEBIAN}/var/cache/apt/archives-real"
-    sudo rmdir "${PARAM_DN_DEBIAN}/var/cache/apt/archives-real"
-    find "${PARAM_DN_DEBIAN}/var/cache/apt/archives/" | while read i ; do sudo rm -rf $i; done
+    sudo rm -f "${PARAM_DN_DEBIAN}/usr/bin/qemu*"
+    sudo umount "${PARAM_DN_DEBIAN}/proc/sys/fs/binfmt_misc"
+    sudo umount "${PARAM_DN_DEBIAN}/dev/pts"
+    sudo umount "${PARAM_DN_DEBIAN}/dev/"
+    sudo umount "${PARAM_DN_DEBIAN}/proc"
+    sudo umount "${PARAM_DN_DEBIAN}/sys/"
 
     sudo umount "${PARAM_DN_DEBIAN}/home/target"
     sudo rmdir "${PARAM_DN_DEBIAN}/home/target"
@@ -1119,19 +1118,25 @@ cd /home/source/
     # rewrite configuration
     yes "" | make config >/dev/null
 
+# make debian package
 #make clean
+mkdir -p /etc/kernel/postinst.d/
+echo "fakeroot make-kpkg --arch arm ${MY_CROSSCOMP_ARG} --initrd ${MY_VEREXT_ARG} kernel_image kernel_headers"
 fakeroot make-kpkg --arch arm ${MY_CROSSCOMP_ARG} --initrd ${MY_VEREXT_ARG} kernel_image kernel_headers
 
-#make ARCH=arm ${MY_CROSSCOMP_DEF} ${MY_VEREXT_DEF} uImage
-#cp arch/arm/boot/uImage ../uImage
-make zImage
-mkdir -p /home/target/boot/
-cp arch/arm/boot/zImage /home/target/boot/zImage
-
+# install to target
 make -j $MACHINECORES
 make -j $MACHINECORES modules
 make -j $MACHINECORES modules_install INSTALL_MOD_PATH="/home/target/"
+make -j $MACHINECORES install INSTALL_MOD_PATH="/home/target/"
 
+mkdir -p "/home/target/${MNTPOINT_BOOT_FIRMWARE}/"
+#make ARCH=arm ${MY_CROSSCOMP_DEF} ${MY_VEREXT_DEF} uImage
+#cp arch/arm/boot/uImage /home/target/${MNTPOINT_BOOT_FIRMWARE}/uImage
+echo "make zImage"
+make zImage
+echo "cp arch/arm/boot/zImage /home/target/${MNTPOINT_BOOT_FIRMWARE}/zImage"
+cp arch/arm/boot/zImage /home/target/${MNTPOINT_BOOT_FIRMWARE}/zImage
 EOF
     compile_in_rootfs_bychroot "KERNEL" "${PREFIX_TMP}-ths" "${srcdir}/${DNSRC_LINUX}" "${DN_ROOTFS_KERNEL}" "${srcdir}/rootfs-compilekernel-${MACHINEARCH}-${pkgname}"
 
