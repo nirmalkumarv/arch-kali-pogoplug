@@ -50,13 +50,13 @@ MAKE_CONFIG=kirkwood_defconfig
 # script will throw an error, but will still continue on, and create an unusable
 # image, keep that in mind.
 PACKAGES_ARM="abootimg cgpt fake-hwclock ntpdate vboot-utils vboot-kernel-utils uboot-mkimage"
-PACKAGES_BASE="kali-menu kali-defaults initramfs-tools sudo parted e2fsprogs usbutils nfs-common lsb-release ntfs-3g usbmount hdparm tmux wpasupplicant"
-PACKAGES_TOOLS="passing-the-hash winexe aircrack-ng hydra john sqlmap wireshark libnfc-bin mfoc nmap ethtool"
-PACKAGES_SERVICES="openssh-server apache2"
-PACKAGES_DESKTOP="xfce4 network-manager network-manager-gnome xserver-xorg-video-fbdev"
-PACKAGES_EXTRAS="iceweasel"
-PACKAGES_ADDON="fruitywifi xfce4-goodies kali-linux-full"
-export PACKAGES="${PACKAGES_ARM} ${PACKAGES_BASE} ${PACKAGES_DESKTOP} ${PACKAGES_TOOLS} ${PACKAGES_SERVICES} ${PACKAGES_EXTRAS} ${PACKAGES_ADDON}"
+PACKAGES_BASE="initramfs-tools sudo parted e2fsprogs usbutils nfs-common lsb-release ntfs-3g usbmount hdparm tmux wpasupplicant"
+PACKAGES_TOOLS="passing-the-hash winexe aircrack-ng hydra john sqlmap libnfc-bin mfoc nmap ethtool"
+PACKAGES_SERVICES="openssh-server"
+#PACKAGES_DESKTOP="kali-menu kali-defaults xfce4 network-manager network-manager-gnome xserver-xorg-video-fbdev"
+#PACKAGES_TOOLS_GUI="wireshark iceweasel"
+#PACKAGES_ADDON="apache2 fruitywifi xfce4-goodies kali-linux-full"
+export PACKAGES="${PACKAGES_ARM} ${PACKAGES_BASE} ${PACKAGES_DESKTOP} ${PACKAGES_TOOLS} ${PACKAGES_SERVICES} ${PACKAGES_TOOLS_GUI} ${PACKAGES_ADDON}"
 
 # the image container size
 IMGCONTAINER_SIZE=3000 # Size of image in megabytes
