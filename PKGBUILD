@@ -267,7 +267,7 @@ chrootdev_unbind() {
 # so we place *.deb and lock file into two folders in ${SRCDEST}/apt-cache-armhf and ${srcdir}/apt-cache-armhf seperately
 
 # link the *.deb from ${SRCDEST}/apt-cache-armhf to ${srcdir}/apt-cache-armhf
-aptcache_link2srcdst() {
+_aptcache_link2srcdst() {
     # the dir stores the real files
     PARAM_DN_BASE=$1
     shift
@@ -285,7 +285,7 @@ aptcache_link2srcdst() {
 }
 
 # backup the new downloaded *.deb from ${srcdir}/apt-cache-armhf to ${SRCDEST}/apt-cache-armhf
-aptcache_backup2srcdst() {
+_aptcache_backup2srcdst() {
     # the dir stores the real files
     PARAM_DN_BASE=$1
     shift
@@ -313,7 +313,7 @@ aptcache_add() {
     sudo mkdir -p "${DN_ROOTFS_DEBIAN1}/var/cache/apt/archives"
     sudo mkdir -p "${DN_ROOTFS_DEBIAN1}/var/cache/apt/archives-real"
     sudo mount -o bind "${DN_APT_CACHE1}" "${DN_ROOTFS_DEBIAN1}/var/cache/apt/archives-real/"
-    aptcache_link2srcdst "../archives-real/" "${DN_ROOTFS_DEBIAN1}/var/cache/apt/archives"
+    _aptcache_link2srcdst "../archives-real/" "${DN_ROOTFS_DEBIAN1}/var/cache/apt/archives"
 }
 
 aptcache_remove() {
@@ -321,7 +321,7 @@ aptcache_remove() {
     shift
 
     # unmount the cache folder befor clean up, we may reuse the cache for other builds.
-    aptcache_backup2srcdst "../archives-real/" "${DN_ROOTFS_DEBIAN1}/var/cache/apt/archives"
+    _aptcache_backup2srcdst "../archives-real/" "${DN_ROOTFS_DEBIAN1}/var/cache/apt/archives"
     sudo umount "${DN_ROOTFS_DEBIAN1}/var/cache/apt/archives-real"
     sudo rmdir "${DN_ROOTFS_DEBIAN1}/var/cache/apt/archives-real"
     find "${DN_ROOTFS_DEBIAN1}/var/cache/apt/archives/" | while read i ; do sudo rm -rf $i; done
