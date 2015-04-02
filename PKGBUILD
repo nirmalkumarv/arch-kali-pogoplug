@@ -196,6 +196,72 @@ unregister_qemuarm() {
     fi
 }
 
+qemuarm_add() {
+    PARAM_DN_DEBIAN1=$1
+    shift
+    register_qemuarm
+    echo "cp `which qemu-arm-static` ${PARAM_DN_DEBIAN1}/usr/bin/"
+    sudo mkdir -p "${PARAM_DN_DEBIAN1}/usr/bin/"
+    sudo cp `which qemu-arm-static` "${PARAM_DN_DEBIAN1}/usr/bin/"
+}
+
+qemuarm_remove() {
+    PARAM_DN_DEBIAN1=$1
+    shift
+    unregister_qemuarm
+    sudo rm -f "${PARAM_DN_DEBIAN1}/usr/bin/qemu*"
+    sudo umount "${PARAM_DN_DEBIAN1}/proc/sys/fs/binfmt_misc"
+}
+
+chrootdev_bind() {
+    PARAM_DN_DEBIAN1=$1
+    shift
+    sudo mkdir -p "${PARAM_DN_DEBIAN1}/sys/"
+    sudo mkdir -p "${PARAM_DN_DEBIAN1}/proc/"
+    sudo mkdir -p "${PARAM_DN_DEBIAN1}/dev/"
+    sudo mkdir -p "${PARAM_DN_DEBIAN1}/dev/pts/"
+    echo "[DBG] mount /sys -> ${PARAM_DN_DEBIAN1}/sys"
+    mkdir -p "${PARAM_DN_DEBIAN1}/sys/"
+    sudo mount -o bind /sys/ "${PARAM_DN_DEBIAN1}/sys/"
+    mount | grep "${PARAM_DN_DEBIAN1}/sys"
+    if [ ! "$?" = "0" ]; then
+        echo "Error in mount sys"
+        exit 1
+    fi
+    echo "[DBG] mount /proc"
+    mkdir -p "${PARAM_DN_DEBIAN1}/proc/"
+    sudo mount -t proc proc "${PARAM_DN_DEBIAN1}/proc/"
+    mount | grep "${PARAM_DN_DEBIAN1}/proc"
+    if [ ! "$?" = "0" ]; then
+        echo "Error in mount proc"
+        exit 1
+    fi
+    echo "[DBG] mount /dev -> ${PARAM_DN_DEBIAN1}/dev"
+    mkdir -p "${PARAM_DN_DEBIAN1}/dev/"
+    sudo mount -o bind /dev/ "${PARAM_DN_DEBIAN1}/dev/"
+    mount | grep "${PARAM_DN_DEBIAN1}/dev"
+    if [ ! "$?" = "0" ]; then
+        echo "Error in mount dev"
+        exit 1
+    fi
+    echo "[DBG] mount /dev/pts -> ${PARAM_DN_DEBIAN1}/dev/pts"
+    sudo mount -o bind /dev/pts "${PARAM_DN_DEBIAN1}/dev/pts/"
+    mount | grep "${PARAM_DN_DEBIAN1}/dev/pts"
+    if [ ! "$?" = "0" ]; then
+        echo "Error in mount dev/pts"
+        exit 1
+    fi
+}
+
+chrootdev_unbind() {
+    PARAM_DN_DEBIAN2=$1
+    shift
+    sudo umount "${PARAM_DN_DEBIAN2}/dev/pts"
+    sudo umount "${PARAM_DN_DEBIAN2}/dev/"
+    sudo umount "${PARAM_DN_DEBIAN2}/proc"
+    sudo umount "${PARAM_DN_DEBIAN2}/sys/"
+}
+
 # since the apt-get place lock in $ROOTFS/var/cache/apt/archives
 # we need to seperate the dir from multiple instances if we want to share the apt cache
 # so we place *.deb and lock file into two folders in ${SRCDEST}/apt-cache-armhf and ${srcdir}/apt-cache-armhf seperately
@@ -238,6 +304,29 @@ aptcache_backup2srcdst() {
     cd -
 }
 
+aptcache_add() {
+    DN_APT_CACHE1=$1
+    shift
+    DN_ROOTFS_DEBIAN1=$1
+    shift
+
+    sudo mkdir -p "${DN_ROOTFS_DEBIAN1}/var/cache/apt/archives"
+    sudo mkdir -p "${DN_ROOTFS_DEBIAN1}/var/cache/apt/archives-real"
+    sudo mount -o bind "${DN_APT_CACHE1}" "${DN_ROOTFS_DEBIAN1}/var/cache/apt/archives-real/"
+    aptcache_link2srcdst "../archives-real/" "${DN_ROOTFS_DEBIAN1}/var/cache/apt/archives"
+}
+
+aptcache_remove() {
+    DN_ROOTFS_DEBIAN1=$1
+    shift
+
+    # unmount the cache folder befor clean up, we may reuse the cache for other builds.
+    aptcache_backup2srcdst "../archives-real/" "${DN_ROOTFS_DEBIAN1}/var/cache/apt/archives"
+    sudo umount "${DN_ROOTFS_DEBIAN1}/var/cache/apt/archives-real"
+    sudo rmdir "${DN_ROOTFS_DEBIAN1}/var/cache/apt/archives-real"
+    find "${DN_ROOTFS_DEBIAN1}/var/cache/apt/archives/" | while read i ; do sudo rm -rf $i; done
+}
+
 prepare_linux_4device_hardkernel () {
     # linux kernel for odroid
     cd "${srcdir}/${DNSRC_LINUX}"
@@ -273,6 +362,9 @@ prepare_linux_4device_pogoplug () {
     # linux kernel for odroid
     #cd "${srcdir}/${DNSRC_LINUX}"
     echo ""
+    # patch with linux-3.18.5-kirkwood-tld-1.patch
+    patch -p1 -i ${srcdir}/linux-3.18.5-kirkwood-tld-1.patch
+    #patch -p1 -i ${srcdir}/linux-3.19-kirkwood-tld-1.patch
 }
 
 prepare_linux_4device() {
@@ -357,19 +449,10 @@ kali_rootfs_debootstrap() {
     fi
 
     if [ "${ISCROSS}" = "1" ]; then
-        register_qemuarm
+        qemuarm_add "${DN_ROOTFS_DEBIAN}"
     fi
 
-    sudo mkdir -p "${DN_ROOTFS_DEBIAN}/var/cache/apt/archives"
-    sudo mkdir -p "${DN_ROOTFS_DEBIAN}/var/cache/apt/archives-real"
-    sudo mount -o bind "${DN_APT_CACHE}" "${DN_ROOTFS_DEBIAN}/var/cache/apt/archives-real/"
-    aptcache_link2srcdst "../archives-real/" "${DN_ROOTFS_DEBIAN}/var/cache/apt/archives"
-
-    if [ "${ISCROSS}" = "1" ]; then
-        echo "cp `which qemu-arm-static` ${DN_ROOTFS_DEBIAN}/usr/bin/"
-        sudo mkdir -p "${DN_ROOTFS_DEBIAN}/usr/bin/"
-        sudo cp `which qemu-arm-static` "${DN_ROOTFS_DEBIAN}/usr/bin/"
-    fi
+    aptcache_add "${DN_APT_CACHE}" "${DN_ROOTFS_DEBIAN}"
 
     echo "[DBG] debootstrap stage 1"
     if [ -f "${PREFIX_TMP}-FLG_KALI_ROOTFS_STAGE1" ]; then
@@ -505,34 +588,7 @@ EOF
         echo "[DBG] SKIP debootstrap stage 3"
 
     else
-        #sudo mkdir -p "${DN_ROOTFS_DEBIAN}/sys"
-        #sudo mkdir -p "${DN_ROOTFS_DEBIAN}/proc"
-        #sudo mkdir -p "${DN_ROOTFS_DEBIAN}/dev/"
-        #sudo mkdir -p "${DN_ROOTFS_DEBIAN}/dev/pts"
-        sudo mount -o bind /sys/ "${DN_ROOTFS_DEBIAN}/sys/"
-        mount | grep "${PARAM_DN_DEBIAN}/sys"
-        if [ ! "$?" = "0" ]; then
-            echo "Error in mount proc"
-            exit 1
-        fi
-        sudo mount -t proc proc "${DN_ROOTFS_DEBIAN}/proc"
-        mount | grep "${PARAM_DN_DEBIAN}/proc"
-        if [ ! "$?" = "0" ]; then
-            echo "Error in mount proc"
-            exit 1
-        fi
-        sudo mount -o bind /dev/ "${DN_ROOTFS_DEBIAN}/dev/"
-        mount | grep "${PARAM_DN_DEBIAN}/dev"
-        if [ ! "$?" = "0" ]; then
-            echo "Error in mount dev"
-            exit 1
-        fi
-        sudo mount -o bind /dev/pts "${DN_ROOTFS_DEBIAN}/dev/pts"
-        mount | grep "${PARAM_DN_DEBIAN}/dev/pts"
-        if [ ! "$?" = "0" ]; then
-            echo "Error in mount dev/pts"
-            exit 1
-        fi
+        chrootdev_bind "${PARAM_DN_DEBIAN}"
 
         # systemstart
         sudo cp "${srcdir}/debian-systemstart.sh" "${DN_ROOTFS_DEBIAN}/etc/init.d/systemstart"
@@ -611,10 +667,7 @@ EOF
         fi
 
         # unmount the cache folder befor clean up, we may reuse the cache for other builds.
-        aptcache_backup2srcdst "../archives-real/" "${DN_ROOTFS_DEBIAN}/var/cache/apt/archives"
-        sudo umount "${DN_ROOTFS_DEBIAN}/var/cache/apt/archives-real"
-        sudo rmdir "${DN_ROOTFS_DEBIAN}/var/cache/apt/archives-real"
-        find "${DN_ROOTFS_DEBIAN}/var/cache/apt/archives/" | while read i ; do sudo rm -rf $i; done
+        aptcache_remove "${DN_ROOTFS_DEBIAN}"
 
         cat << EOF > "${PREFIX_TMP}-aptlst"
 deb http://http.kali.org/kali kali main non-free contrib
@@ -663,26 +716,19 @@ EOF
         sudo rm -f "${DN_ROOTFS_DEBIAN}/debconf.set"
 
         sudo umount "${DN_ROOTFS_DEBIAN}/proc/sys/fs/binfmt_misc"
-        sudo umount "${DN_ROOTFS_DEBIAN}/dev/pts"
-        sudo umount "${DN_ROOTFS_DEBIAN}/dev/"
-        sudo umount "${DN_ROOTFS_DEBIAN}/proc"
-        sudo umount "${DN_ROOTFS_DEBIAN}/sys/"
+        chrootdev_unbind "${PARAM_DN_DEBIAN}"
 
         #sudo chown -R root:root "${DN_ROOTFS_DEBIAN}"
         touch "${PREFIX_TMP}-FLG_KALI_ROOTFS_STAGE3"
     fi
 
     # make sure it umounted
-    aptcache_backup2srcdst "../archives-real/" "${DN_ROOTFS_DEBIAN}/var/cache/apt/archives"
-    sudo umount "${DN_ROOTFS_DEBIAN}/var/cache/apt/archives-real"
-    sudo rmdir "${DN_ROOTFS_DEBIAN}/var/cache/apt/archives-real"
-    find "${DN_ROOTFS_DEBIAN}/var/cache/apt/archives/" | while read i ; do sudo rm -rf $i; done
+    aptcache_remove "${DN_ROOTFS_DEBIAN}"
 
     if [ "${ISCROSS}" = "1" ]; then
-        unregister_qemuarm
+        qemuarm_remove "${DN_ROOTFS_DEBIAN}"
     fi
 }
-
 
 # compile the source via chroot, example
 #compile_in_rootfs_bychroot "KERNEL" "${PREFIX_TMP}-ths" "${srcdir}/${DNSRC_LINUX}" "${DN_ROOTFS_KERNEL}" "${srcdir}/rootfs-compilekernel-${MACHINEARCH}-${pkgname}"
@@ -744,7 +790,7 @@ compile_in_rootfs_bychroot() {
     fi
 
     if [ "${ISCROSS}" = "1" ]; then
-        register_qemuarm
+        qemuarm_add "${PARAM_DN_DEBIAN}"
     fi
 
     # bind install destination
@@ -757,53 +803,10 @@ compile_in_rootfs_bychroot() {
     sudo mount -o bind "${PARAM_DN_SOURCE}" "${PARAM_DN_DEBIAN}/home/source/"
 
     echo "[DBG] mount ${DN_APT_CACHE} -> ${PARAM_DN_DEBIAN}/var/cache/apt/archives-real/"
-    sudo mkdir -p "${PARAM_DN_DEBIAN}/var/cache/apt/archives"
-    sudo mkdir -p "${PARAM_DN_DEBIAN}/var/cache/apt/archives-real"
-    sudo mount -o bind "${DN_APT_CACHE}" "${PARAM_DN_DEBIAN}/var/cache/apt/archives-real/"
-    aptcache_link2srcdst "../archives-real/" "${PARAM_DN_DEBIAN}/var/cache/apt/archives"
-
-    if [ "${ISCROSS}" = "1" ]; then
-        echo "cp `which qemu-arm-static` ${PARAM_DN_DEBIAN}/usr/bin/"
-        sudo mkdir -p "${PARAM_DN_DEBIAN}/usr/bin/"
-        sudo cp `which qemu-arm-static` "${PARAM_DN_DEBIAN}/usr/bin/"
-    fi
+    aptcache_add "${DN_APT_CACHE}" "${PARAM_DN_DEBIAN}"
 
     if [[ ! -f "${PREFIX_TMP}-FLG_KALI_ROOTFS_4COMPILE" || ! -f "${PREFIX_TMP}-FLG_KALI_COMPILE_${PARAM_TAGNAME}_CHROOT" ]]; then
-        #sudo mkdir -p "${PARAM_DN_DEBIAN}/sys"
-        #sudo mkdir -p "${PARAM_DN_DEBIAN}/proc"
-        #sudo mkdir -p "${PARAM_DN_DEBIAN}/dev/"
-        #sudo mkdir -p "${PARAM_DN_DEBIAN}/dev/pts"
-        echo "[DBG] mount /sys -> ${PARAM_DN_DEBIAN}/sys"
-        mkdir -p "${PARAM_DN_DEBIAN}/sys/"
-        sudo mount -o bind /sys/ "${PARAM_DN_DEBIAN}/sys/"
-        mount | grep "${PARAM_DN_DEBIAN}/sys"
-        if [ ! "$?" = "0" ]; then
-            echo "Error in mount sys"
-            exit 1
-        fi
-        echo "[DBG] mount /proc"
-        mkdir -p "${PARAM_DN_DEBIAN}/proc/"
-        sudo mount -t proc proc "${PARAM_DN_DEBIAN}/proc"
-        mount | grep "${PARAM_DN_DEBIAN}/proc"
-        if [ ! "$?" = "0" ]; then
-            echo "Error in mount proc"
-            exit 1
-        fi
-        echo "[DBG] mount /dev -> ${PARAM_DN_DEBIAN}/dev"
-        mkdir -p "${PARAM_DN_DEBIAN}/dev/"
-        sudo mount -o bind /dev/ "${PARAM_DN_DEBIAN}/dev/"
-        mount | grep "${PARAM_DN_DEBIAN}/dev"
-        if [ ! "$?" = "0" ]; then
-            echo "Error in mount dev"
-            exit 1
-        fi
-        echo "[DBG] mount /dev/pts -> ${PARAM_DN_DEBIAN}/dev/pts"
-        sudo mount -o bind /dev/pts "${PARAM_DN_DEBIAN}/dev/pts"
-        mount | grep "${PARAM_DN_DEBIAN}/dev/pts"
-        if [ ! "$?" = "0" ]; then
-            echo "Error in mount dev/pts"
-            exit 1
-        fi
+        chrootdev_bind "${PARAM_DN_DEBIAN}"
     fi
 
     echo "[DBG] create rootfs for compile source"
@@ -885,10 +888,7 @@ EOF
     fi
 
     # unmount the cache folder befor clean up, we may reuse the cache for other builds.
-    aptcache_backup2srcdst "../archives-real/" "${PARAM_DN_DEBIAN}/var/cache/apt/archives"
-    sudo umount "${PARAM_DN_DEBIAN}/var/cache/apt/archives-real"
-    sudo rmdir "${PARAM_DN_DEBIAN}/var/cache/apt/archives-real"
-    find "${PARAM_DN_DEBIAN}/var/cache/apt/archives/" | while read i ; do sudo rm -rf $i; done
+    aptcache_remove "${PARAM_DN_DEBIAN}"
 
     if [[ ! -f "${PREFIX_TMP}-FLG_KALI_ROOTFS_4COMPILE" || ! -f "${PREFIX_TMP}-FLG_KALI_COMPILE_${PARAM_TAGNAME}_CHROOT" ]]; then
 
@@ -922,12 +922,7 @@ EOF
     fi
 
     # make sure it umounted
-    sudo rm -f "${PARAM_DN_DEBIAN}/usr/bin/qemu*"
-    sudo umount "${PARAM_DN_DEBIAN}/proc/sys/fs/binfmt_misc"
-    sudo umount "${PARAM_DN_DEBIAN}/dev/pts"
-    sudo umount "${PARAM_DN_DEBIAN}/dev/"
-    sudo umount "${PARAM_DN_DEBIAN}/proc"
-    sudo umount "${PARAM_DN_DEBIAN}/sys/"
+    chrootdev_unbind "${PARAM_DN_DEBIAN}"
 
     sudo umount "${PARAM_DN_DEBIAN}/home/target"
     sudo rmdir "${PARAM_DN_DEBIAN}/home/target"
@@ -935,7 +930,7 @@ EOF
     sudo rmdir "${PARAM_DN_DEBIAN}/home/source/"
 
     if [ "${ISCROSS}" = "1" ]; then
-        unregister_qemuarm
+        qemuarm_remove "${PARAM_DN_DEBIAN}"
     fi
 }
 
@@ -977,6 +972,25 @@ build_linuxkernel_install_rootfs_4device_pogoplug() {
     if [ ! "$?" = "0" ]; then
         echo "[DBG] Error in copy zImage"
     fi
+    sudo mkdir -p "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/dts"
+    sudo cp ${srcdir}/${DNSRC_LINUX}/arch/arm/boot/dts/kirkwood-*.dtb "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/dts/"
+    if [ ! "$?" = "0" ]; then
+        echo "[DBG] Error in copy dts files"
+    fi
+
+    # create the initrd for the current kernel:
+    #mkinitrd -f -v "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/initrd-$(uname -r).img" $(uname -r)
+
+    sudo cp -a "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage" zImage.fdt
+    echo "cat '${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/dts/kirkwood-pogoplug_v4.dtb' >> zImage.fdt" | sudo sh
+    mkimage -A arm -O linux -T kernel -C none -a 0x00008000 -e 0x00008000 \
+        -n Linux-3.18.5-kirkwood-tld-1 \
+        -d "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage.fdt" \
+        "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/uImage"
+    mkimage -A arm -O linux -T ramdisk -C gzip -a 0x00000000 -e 0x00000000 \
+        -n initramfs-3.18.5-kirkwood-tld-1 \
+        -d "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/initrd.img-3.18.5-kirkwood-tld-1" \
+        "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/uInitrd"
 }
 
 build_linuxkernel_install_rootfs_4device() {
@@ -1129,8 +1143,23 @@ mkdir -p /etc/kernel/postrm.d/
 mkdir -p /etc/kernel/preinst.d/
 echo "fakeroot make-kpkg --arch arm ${MY_CROSSCOMP_ARG} --initrd ${MY_VEREXT_ARG} kernel_image kernel_headers"
 fakeroot make-kpkg --arch arm ${MY_CROSSCOMP_ARG} --initrd ${MY_VEREXT_ARG} kernel_image kernel_headers
+cp /home/*.deb /home/target/${MNTPOINT_BOOT_FIRMWARE}/
 
-# install to target
+echo "install the new packages"
+dpkg -i /home/*.deb
+
+echo "Regenerating the initramfs"
+#dpkg-reconfigure linux-image-${_PKGVER_LINUX}
+#lsinitramfs /boot/initrd.img-${_PKGVER_LINUX}
+mkinitramfs -d /etc/initramfs-tools -o /boot/initrd.img-${_PKGVER_LINUX} -r /
+
+# or boot to new kernel, and run
+#mkinitramfs -o /boot/initrd.img-2.6.18-6-686
+
+cp /boot/initrd.img-${_PKGVER_LINUX} /home/target/${MNTPOINT_BOOT_FIRMWARE}/
+
+
+echo "install to target by make"
 make -j $MACHINECORES
 make -j $MACHINECORES modules
 make -j $MACHINECORES modules_install INSTALL_MOD_PATH="/home/target/"
@@ -1143,6 +1172,7 @@ echo "make zImage"
 make zImage
 echo "cp arch/arm/boot/zImage /home/target/${MNTPOINT_BOOT_FIRMWARE}/zImage"
 cp arch/arm/boot/zImage /home/target/${MNTPOINT_BOOT_FIRMWARE}/zImage
+cp .config /home/target/${MNTPOINT_BOOT_FIRMWARE}/config.kernel
 EOF
     compile_in_rootfs_bychroot "KERNEL" "${PREFIX_TMP}-ths" "${srcdir}/${DNSRC_LINUX}" "${DN_ROOTFS_KERNEL}" "${srcdir}/rootfs-compilekernel-${MACHINEARCH}-${pkgname}"
 
@@ -1301,7 +1331,7 @@ if [[ ! -f "${PREFIX_TMP}-FLG_FORMAT_IMAGE" || ! -f "${PREFIX_TMP}-FLG_RSYNC_ROO
         fi
 
         # enable writeback. this step should do before you use data=writeback in the fstab!
-        tune2fs -o journal_data_writeback
+        tune2fs -o journal_data_writeback $rootp
 
         #dumpe2fs $rootp
         touch "${PREFIX_TMP}-FLG_FORMAT_IMAGE"
