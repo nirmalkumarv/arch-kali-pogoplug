@@ -1137,10 +1137,13 @@ cd /home/source/
 # make debian package
 #make clean
 
+mkdir -p "/home/target/${MNTPOINT_BOOT_FIRMWARE}/"
+
 aptitude safe-upgrade
 mkdir -p /etc/kernel/postinst.d/
 mkdir -p /etc/kernel/postrm.d/
 mkdir -p /etc/kernel/preinst.d/
+
 echo "fakeroot make-kpkg --arch arm ${MY_CROSSCOMP_ARG} --initrd ${MY_VEREXT_ARG} kernel_image kernel_headers"
 fakeroot make-kpkg --arch arm ${MY_CROSSCOMP_ARG} --initrd ${MY_VEREXT_ARG} kernel_image kernel_headers
 cp /home/*.deb /home/target/${MNTPOINT_BOOT_FIRMWARE}/
@@ -1165,7 +1168,6 @@ make -j $MACHINECORES modules
 make -j $MACHINECORES modules_install INSTALL_MOD_PATH="/home/target/"
 make -j $MACHINECORES install INSTALL_MOD_PATH="/home/target/"
 
-mkdir -p "/home/target/${MNTPOINT_BOOT_FIRMWARE}/"
 #make ARCH=arm ${MY_CROSSCOMP_DEF} ${MY_VEREXT_DEF} uImage
 #cp arch/arm/boot/uImage /home/target/${MNTPOINT_BOOT_FIRMWARE}/uImage
 echo "make zImage"
