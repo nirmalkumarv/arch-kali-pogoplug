@@ -1103,7 +1103,7 @@ build_linuxkernel_install_rootfs_bycross() {
 
 build_linuxkernel_install_rootfs_bychroot() {
 
-    cat << EOF > "${PREFIX_TMP}-ths"
+    cat << EOF > "${PREFIX_TMP}-compilelinux"
 #!/bin/bash
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin:$PATH
 export DEBIAN_FRONTEND=noninteractive
@@ -1177,7 +1177,7 @@ echo "cp arch/arm/boot/zImage /home/target/${MNTPOINT_BOOT_FIRMWARE}/zImage"
 cp arch/arm/boot/zImage /home/target/${MNTPOINT_BOOT_FIRMWARE}/zImage
 cp .config /home/target/${MNTPOINT_BOOT_FIRMWARE}/config.kernel
 EOF
-    compile_in_rootfs_bychroot "KERNEL" "${PREFIX_TMP}-ths" "${srcdir}/${DNSRC_LINUX}" "${DN_ROOTFS_KERNEL}" "${srcdir}/rootfs-compilekernel-${MACHINEARCH}-${pkgname}"
+    compile_in_rootfs_bychroot "KERNEL" "${PREFIX_TMP}-compilelinux" "${srcdir}/${DNSRC_LINUX}" "${DN_ROOTFS_KERNEL}" "${srcdir}/rootfs-compilekernel-${MACHINEARCH}-${pkgname}"
 
     # install firmware
     my0_check_valid_path "${DN_ROOTFS_KERNEL}"
