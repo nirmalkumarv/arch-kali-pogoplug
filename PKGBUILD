@@ -23,6 +23,7 @@ makedepends=(
     'yaourt' 'multipath-tools' # for kpartx, in AUR, you need to use yaourt to install it
     'lib32-libstdc++5' 'lib32-zlib' # for 32 bit compiler
     'base-devel' 'abs' 'fakeroot'
+    #'mkinitcpio' # mkinitcpio -g /boot/linux.img -k 3.3.0-ARCH or mkinitramfs -d /etc/initramfs-tools -o /boot/initrd.img-ver1 -r /
     # 'kernel-package' # debian packages, include make-kpkg
     )
 #install="$pkgname.install"
@@ -838,7 +839,7 @@ update-locale LANG="en_US.UTF-8" LANGUAGE="en_US" LC_ALL="en_US.UTF-8"
 #dpkg-reconfigure locales
 dpkg-reconfigure -f noninteractive tzdata
 
-apt-get --yes --force-yes install wget build-essential libncurses-dev devscripts fakeroot kernel-package bc
+apt-get --yes --force-yes install wget build-essential libncurses-dev devscripts fakeroot kernel-package bc initramfs-tools
 
 rm -f /second-stage
 EOF
@@ -1108,7 +1109,7 @@ export PATH=/bin:/sbin:/usr/bin:/usr/sbin:$PATH
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get update
-#apt-get --yes --force-yes install wget build-essential libncurses-dev devscripts fakeroot kernel-package bc
+#apt-get --yes --force-yes install wget build-essential libncurses-dev devscripts fakeroot kernel-package bc initramfs-tools
 
 MACHINECORES=$(grep -c processor /proc/cpuinfo)
 if [ "$MACHINECORES" = "" ]; then
@@ -1603,7 +1604,7 @@ export PATH=/bin:/sbin:/usr/bin:/usr/sbin:$PATH
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get update
-apt-get --yes --force-yes install wget build-essential libncurses-dev devscripts fakeroot kernel-package bc
+apt-get --yes --force-yes install wget build-essential libncurses-dev devscripts fakeroot kernel-package bc initramfs-tools
 
 MACHINECORES=$(grep -c processor /proc/cpuinfo)
 if [ "$MACHINECORES" = "" ]; then
