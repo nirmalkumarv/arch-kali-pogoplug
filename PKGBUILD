@@ -984,12 +984,12 @@ build_linuxkernel_install_rootfs_4device_pogoplug() {
     sudo cp -a "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage" zImage.fdt
     echo "cat '${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/dts/kirkwood-pogoplug_v4.dtb' >> zImage.fdt" | sudo sh
     mkimage -A arm -O linux -T kernel -C none -a 0x00008000 -e 0x00008000 \
-        -n Linux-3.18.5-kirkwood-tld-1 \
+        -n Linux-${_PKGVER_LINUX} \
         -d "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage.fdt" \
         "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/uImage"
     mkimage -A arm -O linux -T ramdisk -C gzip -a 0x00000000 -e 0x00000000 \
-        -n initramfs-3.18.5-kirkwood-tld-1 \
-        -d "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/initrd.img-3.18.5-kirkwood-tld-1" \
+        -n initramfs-${_PKGVER_LINUX} \
+        -d "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/initrd.img-${_PKGVER_LINUX}" \
         "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/uInitrd"
 }
 
