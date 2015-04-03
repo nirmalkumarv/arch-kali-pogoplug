@@ -33,19 +33,24 @@ provides=('kali-pogoplug-image-git')
 conflicts=('kali-pogoplug-image')
 
 
-# config for GoFlex Home/Net, Pogoplug E02/Mobile/V4, iConnect, Dockstar, Sheevaplug, NSA320, NSA325, Topkick,
+if [ 1 = 1 ]; then
+# config for kirkwood: GoFlex Home/Net, Pogoplug E02/Mobile/V4, iConnect, Dockstar, Sheevaplug, NSA320, NSA325, Topkick,
 ARCHITECTURE="armel"
 PATCH_MAC80211="kali-arm-build-scripts-git/patches/kali-wifi-injection-3.18.patch"
 CONFIG_KERNEL="config-3.19-kirkwood-yhfu-3"
 CONFIG_KERNEL="config-3.18.5-kirkwood-tld-1"
-PATCH_CONFIG_KERNEL="pogoplug-kernel-config.patch"
+PATCH_CONFIG_KERNEL="linux-3.18.5-kirkwood-tld-1.patch"
 MAKE_CONFIG=kirkwood_defconfig
-
-# for pogoplug v3
-#MAKE_CONFIG=ox820_defconfig
+else
+# for ox820: pogoplug v3
 # 3.18.5: https://www.dropbox.com/s/o9fp0xg8b6aajg6/linux-3.18.5-oxnas-tld-1.bodhi.tar.bz2
 #"u-boot-oxnas-git::git+https://github.com/mibodhi/u-boot-oxnas.git" # branch 'oxnas'
-
+ARCHITECTURE="armel"
+PATCH_MAC80211="kali-arm-build-scripts-git/patches/kali-wifi-injection-3.18.patch"
+CONFIG_KERNEL="config-3.18.5-oxnas-tld-1"
+PATCH_CONFIG_KERNEL="linux-3.18.5-oxnas-tld-1.patch"
+MAKE_CONFIG=ox820_defconfig
+fi
 
 # Package installations for various sections.
 # This will build a minimal XFCE Kali system with the top 10 tools.
@@ -88,6 +93,8 @@ GITCOMMIT_UBOOT_HARDKERNEL=f631c80969b33b796d2d4c077428b4765393ed2b
 
 DNSRC_UBOOT_KIRKWOOD=uboot-kirkwood-git
 GITCOMMIT_UBOOT_KIRKWOOD=bb8ac0e067f6f42d8832c11c9266707bcba419f9
+DNSRC_UBOOT_OXNAS=uboot-oxnas-git
+GITCOMMIT_UBOOT_OXNAS=3a0f380ee4238cabf01b5b514c182b25ad7123c2
 
 #GITCOMMIT_LINUX=c193f5d80656ce6d471cf3a28fe8259b3e3a02c0
 GITCOMMIT_LINUX=3.18
@@ -98,6 +105,7 @@ DNSRC_UBOOT=u-boot-${GITCOMMIT_UBOOT}
 DNSRC_UBOOT=u-boot-kirkwood-${GITCOMMIT_UBOOT}
 USE_GIT_REPO=0
 #DNSRC_UBOOT=${DNSRC_UBOOT_HARDKERNEL}
+#DNSRC_UBOOT=u-boot-oxnas-${GITCOMMIT_UBOOT}
 #DNSRC_LINUX=linux-hardkernel-git
 
 
@@ -114,20 +122,22 @@ source=(
 
         "firmware-linux-git::git+https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git"
 
+        "kali-arm-build-scripts-git::git+https://github.com/offensive-security/kali-arm-build-scripts.git"
+        "kali-wifi-injection-3.19.patch" #"kali-arm-build-scripts-git::git+https://github.com/offensive-security/kali-arm-build-scripts.git"
+
         # http://forum.doozan.com/read.php?2,12096,12096
         "linux-3.18.5-kirkwood-tld-1.patch"
         "linux-3.19-kirkwood-tld-1.patch"
-        "kali-wifi-injection-3.19.patch" #"kali-arm-build-scripts-git::git+https://github.com/offensive-security/kali-arm-build-scripts.git"
+        "linux-3.18.5-oxnas-tld-1.patch"
 
         "config-3.18.5-kirkwood-tld-1"
         "config-3.19-kirkwood-yhfu-3"
-
-        "kali-arm-build-scripts-git::git+https://github.com/offensive-security/kali-arm-build-scripts.git"
+        "config-3.18.5-oxnas-tld-1"
 
         # u-boot
         # instruction to flash u-boot to device: http://forum.doozan.com/read.php?3,12381
         "https://github.com/mibodhi/u-boot-kirkwood/archive/${GITCOMMIT_UBOOT_KIRKWOOD}.tar.gz" # "${DNSRC_UBOOT_KIRKWOOD}::git+https://github.com/mibodhi/u-boot-kirkwood.git"
-        #"http://dn.odroid.com/toolchains/gcc-linaro-arm-none-eabi-4.8-2014.04_linux.tar.xz"
+        "https://github.com/mibodhi/u-boot-oxnas/archive/${GITCOMMIT_UBOOT_OXNAS}.tar.gz" #"${DNSRC_UBOOT_OXNAS}::git+https://github.com/mibodhi/u-boot-oxnas.git" # branch 'oxnas'
 
         "debian-systemstart.sh"
         "debian-zram.sh"
@@ -138,14 +148,16 @@ md5sums=(
          '9e854df51ca3fef8bfe566dbd7b89241' # linux
          'e8563b2feaa6c33d20d23ac7add9d385' # patch for linux
          'SKIP' # firmware-linux-git
+         'SKIP' # kali-arm-build-scripts-git
+         '48b5da35a73f01d24ecb7735f3ab6c4c' # kali-wifi-injection-3.19.patch
          'fc4929003fbe7013173c450496843503' # linux-3.18.5-kirkwood-tld-1.patch
          'f26bbdfa630138826f48d393f23a0dfb' # linux-3.19-kirkwood-tld-1.patch
-         '48b5da35a73f01d24ecb7735f3ab6c4c' # kali-wifi-injection-3.19.patch
+         'SKIP' # linux-3.18.5-oxnas-tld-1.patch
          '7c9988bc1be5006acd89886959cdb38c' # config-3.18.5-kirkwood-tld-1
          '7d17ef55604aa9a1dfd0159727dcb395' # config-3.19-kirkwood-yhfu-3
-         'SKIP' # kali-arm-build-scripts-git
-         '9ef85adf8bea5ef2e967c9cef827c249' # u-boot
-         #'12d6e8a0cbd2d8e130cc8f55389a95c3' # gcc for uboot
+         'SKIP' # config-3.18.5-oxnas-tld-1
+         '9ef85adf8bea5ef2e967c9cef827c249' # u-boot for kirkwood
+         '8e0000a9b3886cfd3f04109dab9a2fb6' # u-boot for oxnas
          'f488b18bc2ab3bfda4efda2b8f5f773b' # debian-systemstart.sh
          '3793439a6f13115f2251e782646ee8e6' # debian-zram.sh
          'c57652f7e448ecf85d99326fe2e04865' # bash.bashrc.template
@@ -154,14 +166,16 @@ sha1sums=(
          '4557ef53c89fe70a9da230ae1e6542856d8b0a94' # linux
          'f13c27974ca7d40b9ba59efd0193d915d595813c' # patch for linux
          'SKIP' # firmware-linux-git
+         'SKIP' # kali-arm-build-scripts-git
+         'b97d9d19b89b7df9d7992e3cb3715892e7bb37b8' # kali-wifi-injection-3.19.patch
          '2a41d01eb6af4d92eb13cbbb8d129812b924b246' # linux-3.18.5-kirkwood-tld-1.patch
          '6feb050bedbbe9fd67000bc6b1356ccf81c9cbc3' # linux-3.19-kirkwood-tld-1.patch
-         'b97d9d19b89b7df9d7992e3cb3715892e7bb37b8' # kali-wifi-injection-3.19.patch
+         'SKIP' # linux-3.18.5-oxnas-tld-1.patch
          '2a9bcb6626936b00f50dff2ed98f0ca99b86b95c' # config-3.18.5-kirkwood-tld-1
          '1a14482ec0c250bd3dcda34f60fb6312195119e6' # config-3.19-kirkwood-yhfu-3
-         'SKIP' # kali-arm-build-scripts-git
-         '59bbb6103b1cb73b3bc0fff8a3f04e96a03fdd80' # u-boot
-         #'8069f484cfd5a7ea02d5bb74b56ae6c99e478d13' # gcc for uboot
+         'SKIP' # config-3.18.5-oxnas-tld-1
+         '59bbb6103b1cb73b3bc0fff8a3f04e96a03fdd80' # u-boot for kirkwood
+         'd296a2a8b1c22b9a2e5f47b650fbff87d4655a58' # u-boot for oxnas
          '37f7c678e300b433aa2f0319f63065784dd056da' # debian-systemstart.sh
          'ab5a6304d3e3ca5b315cff0bfa25558e38520100' # debian-zram.sh
          'd41cad5f9c329373063e510d5910dc41513ae653' # bash.bashrc.template
@@ -369,7 +383,7 @@ prepare_linux_4device_pogoplug () {
     #cd "${srcdir}/${DNSRC_LINUX}"
     echo ""
     # patch with linux-3.18.5-kirkwood-tld-1.patch
-    patch -p1 -i ${srcdir}/linux-3.18.5-kirkwood-tld-1.patch
+    #patch -p1 -i ${srcdir}/linux-3.18.5-kirkwood-tld-1.patch
     #patch -p1 -i ${srcdir}/linux-3.19-kirkwood-tld-1.patch
 }
 
@@ -973,7 +987,7 @@ EOF
     sudo chmod 755 ${DN_ROOTFS_KERNEL}/scripts/rpi-wiggle.sh
 }
 
-build_linuxkernel_install_rootfs_4device_pogoplug() {
+build_linuxkernel_install_rootfs_4device_pogoplug_kirkwood() {
     sudo cp "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage" "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage-${_PKGVER_LINUX}-kirkwood-yhfu-3"
     if [ ! "$?" = "0" ]; then
         echo "[DBG] Error in copy zImage"
@@ -987,11 +1001,11 @@ build_linuxkernel_install_rootfs_4device_pogoplug() {
     # create the initrd for the current kernel:
     #mkinitrd -f -v "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/initrd-$(uname -r).img" $(uname -r)
 
-    sudo cp -a "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage" "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage.fdt"
-    echo "cat '${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/dts/kirkwood-pogoplug_v4.dtb' >> ${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage.fdt" | sudo sh
+    #sudo cp -a "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage" "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage.fdt"
+    #echo "cat '${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/dts/kirkwood-pogoplug_v4.dtb' >> ${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage.fdt" | sudo sh
     mkimage -A arm -O linux -T kernel -C none -a 0x00008000 -e 0x00008000 \
         -n Linux-${_PKGVER_LINUX} \
-        -d "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage.fdt" \
+        -d "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage" \
         "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/uImage"
     mkimage -A arm -O linux -T ramdisk -C gzip -a 0x00000000 -e 0x00000000 \
         -n initramfs-${_PKGVER_LINUX} \
@@ -999,10 +1013,37 @@ build_linuxkernel_install_rootfs_4device_pogoplug() {
         "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/uInitrd"
 }
 
+build_linuxkernel_install_rootfs_4device_pogoplug_ox820() {
+    sudo cp "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage" "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage-${_PKGVER_LINUX}-kirkwood-yhfu-3"
+    if [ ! "$?" = "0" ]; then
+        echo "[DBG] Error in copy zImage"
+    fi
+    sudo mkdir -p "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/dts"
+    sudo cp ${srcdir}/${DNSRC_LINUX}/arch/arm/boot/dts/ox820-*.dtb "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/dts/"
+    if [ ! "$?" = "0" ]; then
+        echo "[DBG] Error in copy dts files"
+    fi
+
+    # create the initrd for the current kernel:
+    #mkinitrd -f -v "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/initrd-$(uname -r).img" $(uname -r)
+
+    #sudo cp -a "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage" "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage.fdt"
+    #echo "cat '${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/dts/ox820-pogoplug-pro.dtb' >> ${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage.fdt" | sudo sh
+    mkimage -A arm -O linux -T kernel -C none -a 0x60008000 -e 0x60008000 \
+        -n Linux-${_PKGVER_LINUX}-oxnas \
+        -d "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage" \
+        "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/uImage"
+    mkimage -A arm -O linux -T ramdisk -C gzip -a 0x60000000 -e 0x60000000 \
+        -n initramfs-${_PKGVER_LINUX}-oxnas-tld-1 \
+        -d "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/initrd.img-${_PKGVER_LINUX}-oxnas-tld-1" \
+        "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/uInitrd"
+}
+
 build_linuxkernel_install_rootfs_4device() {
     #build_linuxkernel_install_rootfs_4device_raspberry
     #build_linuxkernel_install_rootfs_4device_hardkernel
-    build_linuxkernel_install_rootfs_4device_pogoplug
+    build_linuxkernel_install_rootfs_4device_pogoplug_kirkwood
+    #build_linuxkernel_install_rootfs_4device_pogoplug_ox820
 }
 
 
@@ -1113,6 +1154,11 @@ build_linuxkernel_install_rootfs_bychroot() {
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin:$PATH
 export DEBIAN_FRONTEND=noninteractive
 
+export ARCH=arm
+#export DEB_HOST_ARCH=armhf
+#export DEB_HOST_ARCH=armel
+export DEB_HOST_ARCH=${ARCHITECTURE}
+
 apt-get update
 apt-get --yes --force-yes install wget build-essential libncurses-dev devscripts fakeroot kernel-package bc initramfs-tools
 
@@ -1120,25 +1166,24 @@ MACHINECORES=$(grep -c processor /proc/cpuinfo)
 if [ "$MACHINECORES" = "" ]; then
     MACHINECORES=2
 fi
-
 export CONCURRENCY_LEVEL=${MACHINECORES}
 
 cd /home/source/
 
-    # get kernel version
-    #make oldconfig && make prepare
-    make prepare
+# get kernel version
+#make oldconfig && make prepare
+make prepare
 
-    # load configuration
-    # Configure the kernel. Replace the line below with one of your choice.
-    #make menuconfig # CLI menu for configuration
-    #make nconfig # new CLI menu for configuration
-    #make xconfig # X-based configuration
-    #make oldconfig # using old config from previous kernel version
-    # ... or manually edit .config
+# load configuration
+# Configure the kernel. Replace the line below with one of your choice.
+#make menuconfig # CLI menu for configuration
+#make nconfig # new CLI menu for configuration
+#make xconfig # X-based configuration
+#make oldconfig # using old config from previous kernel version
+# ... or manually edit .config
 
-    # rewrite configuration
-    yes "" | make config >/dev/null
+# rewrite configuration
+yes "" | make config >/dev/null
 
 # make debian package
 #make clean
@@ -1541,7 +1586,7 @@ prepare_uboot_4device_rpi2 () {
     echo "[DBG] prepare_uboot_4device_rpi2"
 }
 
-prepare_uboot_4device_pogoplug () {
+prepare_uboot_4device_pogoplug_kirkwood () {
     echo "[DBG] prepare_uboot_4device_pogoplug"
     echo "[DBG] cd ${srcdir}/${DNSRC_UBOOT} ..."
     cd "${srcdir}/${DNSRC_UBOOT}"
@@ -1554,10 +1599,24 @@ prepare_uboot_4device_pogoplug () {
     fi
 }
 
+prepare_uboot_4device_pogoplug_ox820 () {
+    echo "[DBG] prepare_uboot_4device_pogoplug"
+    echo "[DBG] cd ${srcdir}/${DNSRC_UBOOT} ..."
+    cd "${srcdir}/${DNSRC_UBOOT}"
+    if [ "${USE_GIT_REPO}" = "1" ]; then
+        git checkout oxnas
+        if [ ! "$?" = "0" ]; then
+            echo "Error in git"
+            exit 1
+        fi
+    fi
+}
+
 prepare_uboot_4device () {
     #prepare_uboot_4device_hardkernel
     #prepare_uboot_4device_rpi2
-    prepare_uboot_4device_pogoplug
+    #prepare_uboot_4device_pogoplug_ox820
+    prepare_uboot_4device_pogoplug_kirkwood
 }
 
 prepare_uboot_source () {
@@ -1601,7 +1660,7 @@ build_uboot_install_rootfs_4device_raspberry () {
     echo "TODO: build_uboot_install_rootfs_4device_raspberry"
 }
 
-build_uboot_install_rootfs_4device_pogoplug () {
+build_uboot_install_rootfs_4device_pogoplug_kirkwood () {
     echo "[DBG] compile and install u-boot"
     cat << EOF > "${PREFIX_TMP}-compileuboot"
 #!/bin/bash
@@ -1634,10 +1693,44 @@ EOF
     fi
 }
 
+build_uboot_install_rootfs_4device_pogoplug_oxnas () {
+    echo "[DBG] compile and install u-boot"
+    cat << EOF > "${PREFIX_TMP}-compileuboot"
+#!/bin/bash
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin:$PATH
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get update
+apt-get --yes --force-yes install wget build-essential libncurses-dev devscripts fakeroot kernel-package bc initramfs-tools
+
+MACHINECORES=$(grep -c processor /proc/cpuinfo)
+if [ "$MACHINECORES" = "" ]; then
+    MACHINECORES=2
+fi
+
+export CONCURRENCY_LEVEL=${MACHINECORES}
+
+cd /home/source/
+#make clean
+
+make -j $MACHINECORES ox820_config
+make -j $MACHINECORES
+
+cp "u-boot.bin" "/home/target/${MNTPOINT_BOOT_FIRMWARE}/u-boot.bin"
+
+EOF
+    compile_in_rootfs_bychroot "U-BOOT" "${PREFIX_TMP}-compileuboot" "${srcdir}/${DNSRC_UBOOT}" "${DN_ROOTFS_KERNEL}" "${srcdir}/rootfs-compilekernel-${MACHINEARCH}-${pkgname}"
+    sudo cp "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/u-boot.bin" "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/uboot.2014.07-yhfu-1.pogo_v4.mtd0.kwb"
+    if [ ! "$?" = "0" ]; then
+        echo "[DBG] Error in copy u-boot.bin"
+    fi
+}
+
 build_uboot_install_rootfs_4device () {
     #build_uboot_install_rootfs_4device_hardkernel
     #build_uboot_install_rootfs_4device_raspberry
-    build_uboot_install_rootfs_4device_pogoplug
+    build_uboot_install_rootfs_4device_pogoplug_kirkwood
+    #build_uboot_install_rootfs_4device_pogoplug_oxnas
 }
 
 build_uboot_install_rootfs() {
