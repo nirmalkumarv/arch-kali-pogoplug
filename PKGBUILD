@@ -41,6 +41,11 @@ CONFIG_KERNEL="config-3.18.5-kirkwood-tld-1"
 PATCH_CONFIG_KERNEL="pogoplug-kernel-config.patch"
 MAKE_CONFIG=kirkwood_defconfig
 
+# for pogoplug v3
+#MAKE_CONFIG=ox820_defconfig
+# 3.18.5: https://www.dropbox.com/s/o9fp0xg8b6aajg6/linux-3.18.5-oxnas-tld-1.bodhi.tar.bz2
+#"u-boot-oxnas-git::git+https://github.com/mibodhi/u-boot-oxnas.git" # branch 'oxnas'
+
 
 # Package installations for various sections.
 # This will build a minimal XFCE Kali system with the top 10 tools.
@@ -982,8 +987,8 @@ build_linuxkernel_install_rootfs_4device_pogoplug() {
     # create the initrd for the current kernel:
     #mkinitrd -f -v "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/initrd-$(uname -r).img" $(uname -r)
 
-    sudo cp -a "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage" zImage.fdt
-    echo "cat '${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/dts/kirkwood-pogoplug_v4.dtb' >> zImage.fdt" | sudo sh
+    sudo cp -a "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage" "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage.fdt"
+    echo "cat '${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/dts/kirkwood-pogoplug_v4.dtb' >> ${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage.fdt" | sudo sh
     mkimage -A arm -O linux -T kernel -C none -a 0x00008000 -e 0x00008000 \
         -n Linux-${_PKGVER_LINUX} \
         -d "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage.fdt" \
@@ -1109,7 +1114,7 @@ export PATH=/bin:/sbin:/usr/bin:/usr/sbin:$PATH
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get update
-#apt-get --yes --force-yes install wget build-essential libncurses-dev devscripts fakeroot kernel-package bc initramfs-tools
+apt-get --yes --force-yes install wget build-essential libncurses-dev devscripts fakeroot kernel-package bc initramfs-tools
 
 MACHINECORES=$(grep -c processor /proc/cpuinfo)
 if [ "$MACHINECORES" = "" ]; then
@@ -1145,8 +1150,8 @@ mkdir -p /etc/kernel/postinst.d/
 mkdir -p /etc/kernel/postrm.d/
 mkdir -p /etc/kernel/preinst.d/
 
-echo "fakeroot make-kpkg --arch arm ${MY_CROSSCOMP_ARG} --initrd ${MY_VEREXT_ARG} kernel_image kernel_headers"
-fakeroot make-kpkg --arch arm ${MY_CROSSCOMP_ARG} --initrd ${MY_VEREXT_ARG} kernel_image kernel_headers
+echo "fakeroot make-kpkg --arch ${ARCHITECTURE} ${MY_CROSSCOMP_ARG} --initrd ${MY_VEREXT_ARG} kernel_image kernel_headers"
+fakeroot make-kpkg --arch ${ARCHITECTURE} ${MY_CROSSCOMP_ARG} --initrd ${MY_VEREXT_ARG} kernel_image kernel_headers
 cp /home/*.deb /home/target/${MNTPOINT_BOOT_FIRMWARE}/
 
 echo "install the new packages"
