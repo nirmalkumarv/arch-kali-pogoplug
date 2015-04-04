@@ -152,10 +152,10 @@ md5sums=(
          '48b5da35a73f01d24ecb7735f3ab6c4c' # kali-wifi-injection-3.19.patch
          'fc4929003fbe7013173c450496843503' # linux-3.18.5-kirkwood-tld-1.patch
          'f26bbdfa630138826f48d393f23a0dfb' # linux-3.19-kirkwood-tld-1.patch
-         'SKIP' # linux-3.18.5-oxnas-tld-1.patch
+         'e7a1d3dc8b7472f2f3bd2f12e8768e27' # linux-3.18.5-oxnas-tld-1.patch
          '7c9988bc1be5006acd89886959cdb38c' # config-3.18.5-kirkwood-tld-1
          '7d17ef55604aa9a1dfd0159727dcb395' # config-3.19-kirkwood-yhfu-3
-         'SKIP' # config-3.18.5-oxnas-tld-1
+         '610b78830df315c1652d427d701c5711' # config-3.18.5-oxnas-tld-1
          '9ef85adf8bea5ef2e967c9cef827c249' # u-boot for kirkwood
          '8e0000a9b3886cfd3f04109dab9a2fb6' # u-boot for oxnas
          'f488b18bc2ab3bfda4efda2b8f5f773b' # debian-systemstart.sh
@@ -170,10 +170,10 @@ sha1sums=(
          'b97d9d19b89b7df9d7992e3cb3715892e7bb37b8' # kali-wifi-injection-3.19.patch
          '2a41d01eb6af4d92eb13cbbb8d129812b924b246' # linux-3.18.5-kirkwood-tld-1.patch
          '6feb050bedbbe9fd67000bc6b1356ccf81c9cbc3' # linux-3.19-kirkwood-tld-1.patch
-         'SKIP' # linux-3.18.5-oxnas-tld-1.patch
+         'd3f8f936b54104aef805033e5f9e27f9af37def5' # linux-3.18.5-oxnas-tld-1.patch
          '2a9bcb6626936b00f50dff2ed98f0ca99b86b95c' # config-3.18.5-kirkwood-tld-1
          '1a14482ec0c250bd3dcda34f60fb6312195119e6' # config-3.19-kirkwood-yhfu-3
-         'SKIP' # config-3.18.5-oxnas-tld-1
+         '9d2822daf733ad9ab806cf23a700107923ae3277' # config-3.18.5-oxnas-tld-1
          '59bbb6103b1cb73b3bc0fff8a3f04e96a03fdd80' # u-boot for kirkwood
          'd296a2a8b1c22b9a2e5f47b650fbff87d4655a58' # u-boot for oxnas
          '37f7c678e300b433aa2f0319f63065784dd056da' # debian-systemstart.sh
