@@ -103,9 +103,9 @@ DNSRC_LINUX=linux-${GITCOMMIT_LINUX}
 GITCOMMIT_UBOOT=${GITCOMMIT_UBOOT_KIRKWOOD}
 DNSRC_UBOOT=u-boot-${GITCOMMIT_UBOOT}
 DNSRC_UBOOT=u-boot-kirkwood-${GITCOMMIT_UBOOT}
+#DNSRC_UBOOT=u-boot-oxnas-${GITCOMMIT_UBOOT}
 USE_GIT_REPO=0
 #DNSRC_UBOOT=${DNSRC_UBOOT_HARDKERNEL}
-#DNSRC_UBOOT=u-boot-oxnas-${GITCOMMIT_UBOOT}
 #DNSRC_LINUX=linux-hardkernel-git
 
 
@@ -425,7 +425,7 @@ prepare_linux_source() {
     fi
 
     if [ -f "${srcdir}/${PATCH_CONFIG_KERNEL}" ]; then
-        patch -p0 --no-backup-if-mismatch < ${srcdir}/${PATCH_CONFIG_KERNEL}
+        patch -p1 --no-backup-if-mismatch < ${srcdir}/${PATCH_CONFIG_KERNEL}
         if [ ! "$?" = "0" ]; then
             echo "error in patch ${PATCH_CONFIG_KERNEL}"
             exit 1
