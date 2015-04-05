@@ -1195,8 +1195,9 @@ mkdir -p /etc/kernel/postinst.d/
 mkdir -p /etc/kernel/postrm.d/
 mkdir -p /etc/kernel/preinst.d/
 
-echo "fakeroot make-kpkg --arch ${ARCHITECTURE} ${MY_CROSSCOMP_ARG} --initrd ${MY_VEREXT_ARG} kernel_image kernel_headers"
-fakeroot make-kpkg --arch ${ARCHITECTURE} ${MY_CROSSCOMP_ARG} --initrd ${MY_VEREXT_ARG} kernel_image kernel_headers
+rm -f /home/*.deb
+echo "fakeroot make-kpkg --arch arm ${MY_CROSSCOMP_ARG} --initrd ${MY_VEREXT_ARG} kernel_image kernel_headers"
+fakeroot make-kpkg --arch arm ${MY_CROSSCOMP_ARG} --initrd ${MY_VEREXT_ARG} kernel_image kernel_headers
 cp /home/*.deb /home/target/${MNTPOINT_BOOT_FIRMWARE}/
 
 echo "install the new packages"
