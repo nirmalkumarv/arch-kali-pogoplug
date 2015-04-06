@@ -61,7 +61,7 @@ fi
 # script will throw an error, but will still continue on, and create an unusable
 # image, keep that in mind.
 PACKAGES_ARM="abootimg cgpt fake-hwclock ntpdate vboot-utils vboot-kernel-utils uboot-mkimage"
-PACKAGES_BASE="initramfs-tools sudo parted e2fsprogs usbutils nfs-common lsb-release ntfs-3g usbmount hdparm tmux wpasupplicant"
+PACKAGES_BASE="initramfs-tools sudo parted e2fsprogs usbutils lsb-release ntfs-3g usbmount hdparm tmux wpasupplicant" #nfs-common
 PACKAGES_TOOLS="passing-the-hash winexe aircrack-ng hydra john sqlmap libnfc-bin mfoc nmap ethtool"
 PACKAGES_SERVICES="openssh-server"
 #PACKAGES_DESKTOP="kali-menu kali-defaults xfce4 network-manager network-manager-gnome xserver-xorg-video-fbdev"
@@ -158,7 +158,7 @@ md5sums=(
          '610b78830df315c1652d427d701c5711' # config-3.18.5-oxnas-tld-1
          '9ef85adf8bea5ef2e967c9cef827c249' # u-boot for kirkwood
          '8e0000a9b3886cfd3f04109dab9a2fb6' # u-boot for oxnas
-         'f488b18bc2ab3bfda4efda2b8f5f773b' # debian-systemstart.sh
+         '5d5470eb425bea9a9f0595eacfb4597e' # debian-systemstart.sh
          '3793439a6f13115f2251e782646ee8e6' # debian-zram.sh
          'c57652f7e448ecf85d99326fe2e04865' # bash.bashrc.template
          )
@@ -176,7 +176,7 @@ sha1sums=(
          '9d2822daf733ad9ab806cf23a700107923ae3277' # config-3.18.5-oxnas-tld-1
          '59bbb6103b1cb73b3bc0fff8a3f04e96a03fdd80' # u-boot for kirkwood
          'd296a2a8b1c22b9a2e5f47b650fbff87d4655a58' # u-boot for oxnas
-         '37f7c678e300b433aa2f0319f63065784dd056da' # debian-systemstart.sh
+         '90e51dad70571368ed0fdd9622bf1b843e8d0102' # debian-systemstart.sh
          'ab5a6304d3e3ca5b315cff0bfa25558e38520100' # debian-zram.sh
          'd41cad5f9c329373063e510d5910dc41513ae653' # bash.bashrc.template
          )
@@ -954,12 +954,13 @@ EOF
     fi
 }
 
-build_linuxkernel_install_rootfs_4device_hardkernel() {
+build_linuxkernel_install_rootfs_4device_hardkernel_odroidc1() {
     make uImage
     make dtbs
     sudo mkdir -p "${DN_BOOT_4KERNEL}/dtbs/"
     sudo cp arch/arm/boot/uImage "${DN_BOOT_4KERNEL}/"
     sudo cp arch/arm/boot/dts/meson8b_odroidc.dtb "${DN_BOOT_4KERNEL}/dtbs/"
+    #sudo cp arch/arm/boot/dts/exynos5422-odroidxu3.dtb "${DN_BOOT_4KERNEL}/dtbs/" # Odroid-xu3
 }
 
 build_linuxkernel_install_rootfs_4device_raspberry() {
@@ -1003,11 +1004,11 @@ build_linuxkernel_install_rootfs_4device_pogoplug_kirkwood() {
 
     #sudo cp -a "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage" "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage.fdt"
     #echo "cat '${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/dts/kirkwood-pogoplug_v4.dtb' >> ${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage.fdt" | sudo sh
-    mkimage -A arm -O linux -T kernel -C none -a 0x00008000 -e 0x00008000 \
+    sudo mkimage -A arm -O linux -T kernel -C none -a 0x00008000 -e 0x00008000 \
         -n Linux-${_PKGVER_LINUX} \
         -d "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/zImage" \
         "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/uImage"
-    mkimage -A arm -O linux -T ramdisk -C gzip -a 0x00000000 -e 0x00000000 \
+    sudo mkimage -A arm -O linux -T ramdisk -C gzip -a 0x00000000 -e 0x00000000 \
         -n initramfs-${_PKGVER_LINUX} \
         -d "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/initrd.img-${_PKGVER_LINUX}" \
         "${DN_ROOTFS_KERNEL}/${MNTPOINT_BOOT_FIRMWARE}/uInitrd"
@@ -1041,7 +1042,7 @@ build_linuxkernel_install_rootfs_4device_pogoplug_ox820() {
 
 build_linuxkernel_install_rootfs_4device() {
     #build_linuxkernel_install_rootfs_4device_raspberry
-    #build_linuxkernel_install_rootfs_4device_hardkernel
+    #build_linuxkernel_install_rootfs_4device_hardkernel_odroidc1
     build_linuxkernel_install_rootfs_4device_pogoplug_kirkwood
     #build_linuxkernel_install_rootfs_4device_pogoplug_ox820
 }
@@ -1191,9 +1192,10 @@ yes "" | make config >/dev/null
 mkdir -p "/home/target/${MNTPOINT_BOOT_FIRMWARE}/"
 
 aptitude safe-upgrade
-mkdir -p /etc/kernel/postinst.d/
-mkdir -p /etc/kernel/postrm.d/
 mkdir -p /etc/kernel/preinst.d/
+mkdir -p /etc/kernel/postinst.d/
+mkdir -p /etc/kernel/prerm.d/
+mkdir -p /etc/kernel/postrm.d/
 
 rm -f /home/*.deb
 echo "fakeroot make-kpkg --arch arm ${MY_CROSSCOMP_ARG} --initrd ${MY_VEREXT_ARG} kernel_image kernel_headers"
@@ -1201,18 +1203,18 @@ fakeroot make-kpkg --arch arm ${MY_CROSSCOMP_ARG} --initrd ${MY_VEREXT_ARG} kern
 cp /home/*.deb /home/target/${MNTPOINT_BOOT_FIRMWARE}/
 
 echo "install the new packages"
-dpkg -i /home/*.deb
+dpkg -i --force-architecture --force-all /home/*.deb
 
 echo "Regenerating the initramfs"
 #dpkg-reconfigure linux-image-${_PKGVER_LINUX}
 #lsinitramfs /boot/initrd.img-${_PKGVER_LINUX}
-mkinitramfs -d /etc/initramfs-tools -o /boot/initrd.img-${_PKGVER_LINUX} -r /
+#mkinitramfs -d /etc/initramfs-tools -o /boot/initrd.img-${_PKGVER_LINUX} -r /
 
 # or boot to new kernel, and run
 #mkinitramfs -o /boot/initrd.img-2.6.18-6-686
 
-cp /boot/initrd.img-${_PKGVER_LINUX} /home/target/${MNTPOINT_BOOT_FIRMWARE}/
-
+# copy initramfs
+cp /boot/initrd.img-* /home/target/${MNTPOINT_BOOT_FIRMWARE}/initrd.img-${_PKGVER_LINUX}
 
 echo "install to target by make"
 make -j $MACHINECORES

@@ -31,6 +31,7 @@ systemstart_check_create_sshca() {
         log_action_msg "Generating SSH host keys..." || true
         #mount -n -o remount,rw / || echo "Remounting / rw failed"
         # dpkg-reconfigure openssh-server
+        mkdir -p /etc/ssh/
         ssh-keygen -A
         #sync || echo "sync failed"
         #mount -n -o remount,ro / || echo "Remounting / ro failed"
