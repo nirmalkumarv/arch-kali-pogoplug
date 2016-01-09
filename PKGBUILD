@@ -358,10 +358,12 @@ prepare_linux_4device_hardkernel () {
         git checkout odroidc-3.10.y
     fi
 
-    patch -p1 --no-backup-if-mismatch < ${srcdir}/kali-wifi-injection-chan.c.patch
-    if [ ! "$?" = "0" ]; then
-        echo "error in patch kali-wifi-injection-chan.c.patch"
-        exit 1
+    if [ -f ${srcdir}/kali-wifi-injection-chan.c.patch ]; then
+        patch -p1 --no-backup-if-mismatch < ${srcdir}/kali-wifi-injection-chan.c.patch
+        if [ ! "$?" = "0" ]; then
+            echo "error in patch kali-wifi-injection-chan.c.patch"
+            exit 1
+        fi
     fi
 }
 
@@ -409,10 +411,12 @@ prepare_linux_source() {
     prepare_linux_4device
     cd "${srcdir}/${DNSRC_LINUX}"
 
-    patch -p1 --no-backup-if-mismatch < ${srcdir}/${PATCH_MAC80211}
-    if [ ! "$?" = "0" ]; then
-        echo "error in patch ${PATCH_MAC80211}"
-        exit 1
+    if [ -f ${srcdir}/${PATCH_MAC80211} ]; then
+        patch -p1 --no-backup-if-mismatch < ${srcdir}/${PATCH_MAC80211}
+        if [ ! "$?" = "0" ]; then
+            echo "error in patch ${PATCH_MAC80211}"
+            exit 1
+        fi
     fi
 
     if [ -f "${srcdir}/${CONFIG_KERNEL}" ]; then
@@ -448,7 +452,6 @@ prepare_linux_source() {
     #sed -i '2iexit 0' scripts/depmod.sh
 }
 
-
 kali_rootfs_debootstrap() {
     PARAM_DN_DEBIAN=$1
     shift
@@ -481,7 +484,7 @@ kali_rootfs_debootstrap() {
     else
         # create the rootfs - not much to modify here, except maybe the hostname.
         echo "[DBG] debootstrap --foreign --arch ${MACHINEARCH} kali-current '${DN_ROOTFS_DEBIAN}'  http://${INSTALL_MIRROR}/kali"
-        sudo debootstrap --foreign --no-check-gpg --include=ca-certificates,ssh,vim,locales,ntpdate,initramfs-tools --arch ${MACHINEARCH} kali-current "${DN_ROOTFS_DEBIAN}" "http://${INSTALL_MIRROR}/kali"
+        sudo debootstrap --foreign --no-check-gpg --include=ca-certificates,ssh,vim,locales,ntpdate,initramfs-tools,wget,apt-utils,sudo --arch ${MACHINEARCH} kali-current "${DN_ROOTFS_DEBIAN}" "http://${INSTALL_MIRROR}/kali"
         if [ "$?" = "0" ]; then
             touch "${PREFIX_TMP}-FLG_KALI_ROOTFS_STAGE1"
         else
