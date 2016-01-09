@@ -686,7 +686,7 @@ EOF
             exit 1
         fi
 
-        # unmount the cache folder befor clean up, we may reuse the cache for other builds.
+        # unmount the cache folder before cleaning up, we may reuse the cache for other builds.
         aptcache_remove "${DN_ROOTFS_DEBIAN}"
 
         cat << EOF > "${PREFIX_TMP}-aptlst"
@@ -801,10 +801,10 @@ compile_in_rootfs_bychroot() {
     # build kali rootfs
     cd "$srcdir"
 
-    if [ ! -f /usr/share/debootstrap/scripts/kali ]; then
-        sudo ln -s /usr/share/debootstrap/scripts/sid /usr/share/debootstrap/scripts/kali
+    if [ ! -f /usr/share/debootstrap/scripts/kali-current ]; then
+        sudo ln -s /usr/share/debootstrap/scripts/sid /usr/share/debootstrap/scripts/kali-current
     fi
-    if [ ! -f /usr/share/debootstrap/scripts/kali ]; then
+    if [ ! -f /usr/share/debootstrap/scripts/kali-current ]; then
         echo "Error: no deebootstrap for kali"
         exit 1
     fi
@@ -835,9 +835,9 @@ compile_in_rootfs_bychroot() {
 
     else
         # create the rootfs - not much to modify here, except maybe the hostname.
-        echo "[DBG] debootstrap --variant=minbase --no-check-gpg --include=wget,apt-utils,sudo --arch ${MACHINEARCH} kali '${PARAM_DN_DEBIAN}'  http://${INSTALL_MIRROR}/kali"
+        echo "[DBG] debootstrap --variant=minbase --no-check-gpg --include=wget,apt-utils,sudo --arch ${MACHINEARCH} kali-current '${PARAM_DN_DEBIAN}'  http://${INSTALL_MIRROR}/kali"
         #sudo debootstrap --variant=minbase --no-check-gpg --include=wget,apt-utils,sudo --arch=${MACHINEARCH} jessie "${PARAM_DN_DEBIAN}"
-        sudo debootstrap --variant=minbase --no-check-gpg --include=wget,apt-utils,sudo --arch ${MACHINEARCH} kali "${PARAM_DN_DEBIAN}" "http://${INSTALL_MIRROR}/kali"
+        sudo debootstrap --variant=minbase --no-check-gpg --include=ca-certificates,ssh,vim,locales,ntpdate,initramfs-tools,wget,apt-utils,sudo --arch ${MACHINEARCH} kali-current "${PARAM_DN_DEBIAN}" "http://${INSTALL_MIRROR}/kali"
         if [ ! "$?" = "0" ]; then
             echo "Error in debootstarap stage 1"
             exit 1
