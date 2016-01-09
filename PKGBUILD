@@ -460,11 +460,11 @@ kali_rootfs_debootstrap() {
     # build kali rootfs
     cd "$srcdir"
 
-    if [ ! -f /usr/share/debootstrap/scripts/kali ]; then
-        sudo ln -s /usr/share/debootstrap/scripts/sid /usr/share/debootstrap/scripts/kali
+    if [ ! -f /usr/share/debootstrap/scripts/kali-current ]; then
+        sudo ln -s /usr/share/debootstrap/scripts/sid /usr/share/debootstrap/scripts/kali-current
     fi
-    if [ ! -f /usr/share/debootstrap/scripts/kali ]; then
-        echo "Error: no deebootstrap for kali"
+    if [ ! -f /usr/share/debootstrap/scripts/kali-current ]; then
+        echo "Error: no debootstrap for kali"
         exit 1
     fi
 
@@ -480,8 +480,8 @@ kali_rootfs_debootstrap() {
 
     else
         # create the rootfs - not much to modify here, except maybe the hostname.
-        echo "[DBG] debootstrap --foreign --arch ${MACHINEARCH} kali '${DN_ROOTFS_DEBIAN}'  http://${INSTALL_MIRROR}/kali"
-        sudo debootstrap --foreign --no-check-gpg --include=ca-certificates,ssh,vim,locales,ntpdate,initramfs-tools --arch ${MACHINEARCH} kali "${DN_ROOTFS_DEBIAN}" "http://${INSTALL_MIRROR}/kali"
+        echo "[DBG] debootstrap --foreign --arch ${MACHINEARCH} kali-current '${DN_ROOTFS_DEBIAN}'  http://${INSTALL_MIRROR}/kali"
+        sudo debootstrap --foreign --no-check-gpg --include=ca-certificates,ssh,vim,locales,ntpdate,initramfs-tools --arch ${MACHINEARCH} kali-current "${DN_ROOTFS_DEBIAN}" "http://${INSTALL_MIRROR}/kali"
         if [ "$?" = "0" ]; then
             touch "${PREFIX_TMP}-FLG_KALI_ROOTFS_STAGE1"
         else
@@ -510,8 +510,8 @@ kali_rootfs_debootstrap() {
 
     # Create sources.list
     cat << EOF > "${PREFIX_TMP}-aptlst1"
-deb http://${INSTALL_MIRROR}/kali kali main contrib non-free
-deb http://${INSTALL_SECURITY}/kali-security kali/updates main contrib non-free
+deb http://${INSTALL_MIRROR}/kali kali-current main contrib non-free
+deb http://${INSTALL_SECURITY}/kali-security kali-current/updates main contrib non-free
 EOF
     chmod 644 "${PREFIX_TMP}-aptlst1"
     sudo chown root:root "${PREFIX_TMP}-aptlst1"
@@ -690,11 +690,11 @@ EOF
         aptcache_remove "${DN_ROOTFS_DEBIAN}"
 
         cat << EOF > "${PREFIX_TMP}-aptlst"
-deb http://http.kali.org/kali kali main non-free contrib
-deb http://security.kali.org/kali-security kali/updates main contrib non-free
+deb http://${INSTALL_MIRROR}/kali kali-current main contrib non-free
+deb http://${INSTALL_SECURITY}/kali-security kali-current/updates main contrib non-free
 
-deb-src http://http.kali.org/kali kali main non-free contrib
-deb-src http://security.kali.org/kali-security kali/updates main contrib non-free
+deb-src http://${INSTALL_MIRROR}/kali kali-current main non-free contrib
+deb-src http://${INSTALL_SECURITY}/kali-security kali-current/updates main contrib non-free
 EOF
         chmod 644 "${PREFIX_TMP}-aptlst"
         sudo chown root:root "${PREFIX_TMP}-aptlst"
@@ -1368,6 +1368,9 @@ if [[ ! -f "${PREFIX_TMP}-FLG_FORMAT_IMAGE" || ! -f "${PREFIX_TMP}-FLG_RSYNC_ROO
     bootp="/dev/mapper/${LOOPNAME}p1"
     rootp="/dev/mapper/${LOOPNAME}p2"
 
+    echo "waits for 8 seconds for $rootp to be accessible ..."
+    sleep 8
+
     if [ -f "${PREFIX_TMP}-FLG_FORMAT_IMAGE" ]; then
         echo "[DBG] SKIP rsync rootfs"
 
@@ -1490,7 +1493,7 @@ fi
         fi
     fi
     if [ "${FLG_COMPRESSED}" = "0" ]; then
-        gzip -9 -k ${FN_IMAGE}
+        gzip -9 ${FN_IMAGE}
         if [ "$?" = "0" ]; then
             (cd $(dirname ${FN_IMAGE}.gz) && sha1sum $(basename ${FN_IMAGE}.gz) > ${FN_IMAGE}.gz.sha1sum)
             FLG_COMPRESSED=1
@@ -1838,7 +1841,7 @@ EOF
     fi
 
     # x window
-    mkdir -p ${DN_ROOTFS_DEBIAN}/etc/X11/
+    sudo mkdir -p ${DN_ROOTFS_DEBIAN}/etc/X11/
     sudo mv ${DN_ROOTFS_DEBIAN}/etc/X11/xorg.conf ${DN_ROOTFS_DEBIAN}/etc/X11/xorg.conf.old
     T="${PREFIX_TMP}-xorg.conf"
     cat << EOF > "${T}"
